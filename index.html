@@ -496,8 +496,8 @@ a{color:var(--main-d)}
     </div>
     <div class="top-actions">
       <div class="sync-pill"><span class="dot local" id="syncDot"></span><span id="syncLabel">本机保存</span></div>
-      <button class="who" data-action="switch-identity" title="切换我的身份（两人各选一个）">
-        <span class="av" id="myAvatar">我</span><span id="myName">选择身份</span><span style="color:var(--ink3)">▾</span>
+      <button class="who" data-action="switch-identity" title="查看我的身份">
+        <span class="av" id="myAvatar">我</span><span id="myName">选择身份</span><span id="whoCaret" style="color:var(--ink3)">▾</span>
       </button>
     </div>
   </header>
@@ -982,6 +982,7 @@ a{color:var(--main-d)}
           <button class="btn btn-ghost" data-action="leave-room">退出共享</button>
         </div>
       </div>
+      <div style="margin-top:13px"><button class="btn btn-ghost" type="button" data-action="change-identity">更正我的身份（仅选错时使用）</button></div>
     </div>
 
     <div class="card">
@@ -1015,7 +1016,7 @@ a{color:var(--main-d)}
       <div class="desc" style="font-size:12.5px;line-height:1.9">
         1. 页面是单人视角：饮食、喝水、跳操流水、体重趋势、看板都只显示「我」的记录；首页的「当日体重」与「今日消耗」两块同时显示两人数据。<br>
         2. 两人各用各设备时，由一人在「设置 → 双人共享」创建房间并把邀请链接发给对方；对方粘贴加入后，两人自动对应「我 / 对方」两个身份。<br>
-        3. 只有体重 / 腰围与跳操消耗会同步；饮食、喝水、三餐照片、留言与设置始终留在各自设备。右上角头像可手动切换身份。<br>
+        3. 只有体重 / 腰围与跳操消耗会同步；饮食、喝水、三餐照片、留言与设置始终留在各自设备。身份首次确认后锁定，不能自由切换到对方；选错了可用下方「更正我的身份」。<br>
         4. 体重精确到小数点后两位，腰围可单独记录；两者建议每天固定时段测量，饮食推荐按日期自动轮换。<br>
         5. 首页体重卡片下方给出「较起始」「较昨日」两组对比；昨日未称时自动改用最近一次记录并标注日期。<br>
         6. 「饮食 → 三餐照片」可上传照片、点选食物自动估算热量并生成建议；照片压缩后保存在本机，不会上传，也可配置视觉模型接口自动看图识别。<br>
@@ -1748,6 +1749,7 @@ function renderHeader(){
   $('#roomTitle').textContent=state.settings.roomName||'一起变轻盈';
   $('#myName').textContent=m.name||'选择身份';
   const av=$('#myAvatar'); av.textContent=String(m.name||'?').slice(0,1); av.style.background=m.color||COLORS[0];
+  const wc=$('#whoCaret'); if(wc) wc.style.display=identityLocked()?'none':'';
   $('#todayDate').textContent=today()+' · '+['周日','周一','周二','周三','周四','周五','周六'][new Date().getDay()];
   const lgA=$('#lgA'); if(lgA) lgA.style.background=me().color||COLORS[0];
   const lgAN=$('#lgAName'); if(lgAN) lgAN.textContent=(me().name||'我')+' · 我的记录';
@@ -2488,7 +2490,7 @@ function renderSettings(){
     '<div class="form-row r2"><div class="field"><label>起始体重（kg）</label><input id="pStart" type="number" min="20" max="300" step="0.01" value="'+esc(m.startWeight)+'" placeholder="60.00"></div>'+
     '<div class="field"><label>目标体重（kg）</label><input id="pTarget" type="number" min="20" max="300" step="0.01" value="'+esc(m.targetWeight)+'" placeholder="55.00"></div></div>'+
     '<button class="btn btn-primary btn-block" type="submit">保存我的档案</button>'+
-    '<p class="mini" style="margin-top:9px">切换右上角身份后可分别维护各自的档案。当前身份：'+esc(m.name)+'</p>';
+    '<p class="mini" style="margin-top:9px">身份已锁定在本机，各人维护各自的档案。当前身份：'+esc(m.name)+'</p>';
    renderSettings._sig=sig; renderSettings._pending=false;
   }
   const days=Math.max(1,Math.round((dayTs(today())-dayTs(state.settings.startDate||today()))/86400000)+1);
@@ -2721,14 +2723,21 @@ function renderAll(){ renderHeader(); renderShareBanner(); renderHomeCards(); re
   renderTodayWeights(); renderTodayCompare(); renderTodayBurn(); renderTrend();
   renderDiet(); renderPhotos(); renderRecords(); renderSettings(); }
 
+/* ---------------- 身份锁定 ---------------- */
+const IDLOCK='fitdesk:identityLock';
+let identityEditMode=false;
+function identityLocked(){ try{ return localStorage.getItem(IDLOCK)||''; }catch(e){ return ''; } }
+function lockIdentity(id){ try{ localStorage.setItem(IDLOCK,id); localStorage.setItem('fitdesk:myid',id); }catch(e){} }
+function clearIdentityLock(){ try{ localStorage.removeItem(IDLOCK); }catch(e){} }
+
 /* ---------------- modals ---------------- */
 function closeModal(){ $('#modalRoot').innerHTML=''; }
 function showModal(html){ $('#modalRoot').innerHTML='<div class="mask" data-action="close-modal"><div class="modal">'+html+'</div></div>'; }
 function identityModal(force){
   const ms=activeMembers();
-  showModal('<h3>先选一下你是谁 👋</h3><div class="mdesc">选一个身份，之后页面就按「我」的视角显示。两人各用各设备时请各选一个；通过邀请链接加入的一方会自动设为另一个身份。体重与跳操消耗会同步给对方，其余记录只留在本机。</div>'+
+  showModal('<h3>请确认你是谁 👋</h3><div class="mdesc">选一次就好，<b>确认后身份会锁定在这台设备上，之后不能自由切换到对方</b>。页面按「我」的视角显示；体重与跳操消耗会同步给对方，其余记录只留在本机。</div>'+
     ms.map(m=>'<button class="opt" data-action="pick-identity" data-id="'+esc(m.id)+'">'+avatarHTML(m,34)+
-      '<span><span class="ot">我是 '+esc(m.name)+'</span><br><span class="od">选择后可在设置里修改名字与档案</span></span></button>').join('')+
+      '<span><span class="ot">我是 '+esc(m.name)+'</span><br><span class="od">确认后本机身份锁定，仅本人可在设置里更正</span></span></button>').join('')+
     (force?'':'<button class="btn btn-ghost btn-block" data-action="close-modal" style="margin-top:6px">取消</button>'));
 }
 
@@ -2784,7 +2793,7 @@ async function joinRoom(txt){
   if(!inv||!inv.room||!inv.token){ toast('邀请信息不完整，请粘贴完整链接'); return; }
   const old={provider,roomId,ghToken,myId};
   provider='gist'; roomId=inv.room; ghToken=inv.token;
-  if(inv.who) myId=inv.who; else if(!myId) myId='m1';
+  if(inv.who && !identityLocked()) myId=inv.who; else if(!myId) myId='m1';
   setSync('syncing');
   try{
     const remote=await cloudGet(inv.room);
@@ -2966,11 +2975,20 @@ function bind(){
     if(cb){ pmCat=cb.dataset.cat; renderPhotoDraft(); return; }
     const b=e.target.closest('[data-action]'); if(!b) return;
     const a=b.dataset.action;
-    if(a==='close-modal'){ if(e.target!==b) return; closeModal(); }
-    else if(a==='switch-identity'){ identityModal(false); }
+    if(a==='close-modal'){ if(e.target!==b) return; identityEditMode=false; closeModal(); }
+    else if(a==='switch-identity'){
+      if(identityLocked()) toast('身份已锁定为「'+me().name+'」，不能切换到对方');
+      else identityModal(true);
+    }
     else if(a==='pick-identity'){
-      myId=b.dataset.id; try{ localStorage.setItem('fitdesk:myid',myId); }catch(err){}
-      closeModal(); renderAll(); toast('已切换为「'+me().name+'」');
+      if(identityLocked() && !identityEditMode){ closeModal(); toast('身份已锁定'); return; }
+      myId=b.dataset.id; lockIdentity(myId); identityEditMode=false;
+      closeModal(); renderAll(); toast('已确认身份「'+me().name+'」，本机已锁定');
+    }
+    else if(a==='change-identity'){
+      if(!identityLocked()){ identityModal(true); return; }
+      if(!confirm('当前身份是「'+me().name+'」。\n\n确认要重新选择身份吗？此入口仅供选错时更正使用。')) return;
+      identityEditMode=true; identityModal(false);
     }
     else if(a==='water-plus'||a==='water-minus'){ waterQuick(a==='water-plus'?1:-1); }
     else if(a==='edit-intake'){ if(!myId){ identityModal(true); return; } intakeModal(); }
@@ -3161,16 +3179,18 @@ function boot(){
     myId=localStorage.getItem('fitdesk:myid')||'';
   }catch(e){}
   const urlRoom=params.get('room'), urlToken=params.get('k'), urlWho=params.get('who');
+  const lockedId=identityLocked();
   if(urlRoom && urlToken){
     provider='gist'; roomId=urlRoom; ghToken=urlToken;
-    if(urlWho) myId=urlWho;
+    if(urlWho && !lockedId) myId=urlWho;
   }else if(savedProvider==='gist' && savedRoom && savedToken){
     provider='gist'; roomId=savedRoom; ghToken=savedToken;
   }else{
     provider='local'; roomId='local'; ghToken='';
   }
+  if(lockedId) myId=lockedId;
   persistConfig();
-  if(urlWho){ try{ localStorage.setItem('fitdesk:myid',urlWho); }catch(e){} }
+  if(urlWho && !lockedId){ try{ localStorage.setItem('fitdesk:myid',urlWho); }catch(e){} }
   state=loadAnyLocal()||emptyState();
   ensureMembers(); saveLocal();
 
@@ -3182,7 +3202,11 @@ function boot(){
   /* 同一浏览器的多个标签页之间同步本机数据（不涉及网络） */
   try{ bc=new BroadcastChannel('fitdesk-local'); bc.onmessage=ev=>{ if(ev.data&&ev.data.type==='changed'){ const s2=loadLocal(); if(s2){ state=s2; renderAll(); } } }; }catch(e){}
 
-  if(!myId || !activeMembers().some(m=>m.id===myId)) identityModal(true);
+  if(!identityLocked()){
+    identityModal(true);
+  }else if(!myId || !activeMembers().some(m=>m.id===myId)){
+    clearIdentityLock(); myId=''; identityModal(true);
+  }
   if(provider==='gist'){
     setSync('syncing'); sync();
     setInterval(()=>{ if(document.visibilityState==='visible' && !syncing) sync(); },POLL_MS);
