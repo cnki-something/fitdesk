@@ -581,11 +581,11 @@ a{color:var(--main-d)}
         <div class="hc-sub" id="hcWaterSub">目标 —</div>
         <button class="hc-btn" data-action="water-plus">＋ 喝一杯</button>
       </div>
-      <div class="hcard" data-tab="period">
-        <div class="hc-top"><span>🌸 生理周期</span><span class="go">›</span></div>
-        <div class="hc-big" id="hcPeriod">未记录</div>
-        <div class="hc-sub" id="hcPeriodSub">点一下记录</div>
-        <button class="hc-btn" data-tab="period">记录经期</button>
+      <div class="hcard">
+        <div class="hc-top"><span>🚽 排便管理</span></div>
+        <div class="hc-big" id="hcBowel">未记录</div>
+        <div class="hc-sub" id="hcBowelSub">点一下记录今天</div>
+        <button class="hc-btn" data-action="bowel-toggle">今天排了</button>
       </div>
       <div class="hcard full" data-tab="records">
         <div class="hc-top"><span>📊 数据看板</span><span class="go">›</span></div>
@@ -1051,7 +1051,7 @@ a{color:var(--main-d)}
    ========================================================= */
 'use strict';
 
-const ARRAYS = ['members','workouts','weights','meals','checkins','messages','periods','courses','intakeGoals'];
+const ARRAYS = ['members','workouts','weights','meals','checkins','messages','periods','courses','intakeGoals','bowel'];
 
 const WORKOUTS = [
   {n:'刘畊宏燃脂操',met:6.5},{n:'帕梅拉有氧',met:7.0},{n:'HIIT 间歇',met:8.5},
@@ -1202,7 +1202,7 @@ function emptyState(){
   return {
     app:'fitdesk', version:1,
     settings:{roomName:'一起变轻盈',startDate:today(),weeklyGoal:2400,recipeOffset:0,cupMl:500,waterGoalMl:2000,ts:0},
-    members:[], workouts:[], weights:[], meals:[], checkins:[], messages:[], periods:[], courses:[], intakeGoals:[],
+    members:[], workouts:[], weights:[], meals:[], checkins:[], messages:[], periods:[], courses:[], intakeGoals:[], bowel:[],
     meta:{ts:0,by:''}
   };
 }
@@ -1530,6 +1530,19 @@ function renderTrendChart(){
     '<div class="wt-lb"><span>'+fmtDate(all[0].date)+' 起 · 共 '+all.length+' 次</span>'+
     '<span>'+(lastK>0?'最新 '+lastK.toFixed(2)+' kg':'')+(lastK>0&&lastW>0?' · ':'')+(lastW>0?'腰围 '+lastW.toFixed(1)+' cm':'')+'</span></div>';
 }
+function bowelInfo(){
+  const t=today();
+  const arr=live(state.bowel||[]).filter(x=>x.memberId===myId);
+  const set=new Set(arr.map(x=>x.date));
+  const hasToday=set.has(t);
+  let cursor=hasToday?t:addDays(t,-1), streak=0;
+  while(set.has(cursor)&&streak<400){ streak++; cursor=addDays(cursor,-1); }
+  const past=arr.map(x=>x.date).filter(d=>d<t).sort();
+  const last=past.length?past[past.length-1]:'';
+  let gap=null;
+  if(last){ gap=0; let c=last; while(c<t&&gap<400){ c=addDays(c,1); gap++; } }
+  return {hasToday:hasToday,streak:streak,last:last,gap:gap,count:arr.length};
+}
 function renderHomeCards(){
   const b=budget(myId), t=today(), burn=todayKcal();
   const left=Math.max(0,num(b.target)-num(b.eaten));
@@ -1607,14 +1620,14 @@ function renderHomeCards(){
     const wr=$('#hcWaterRing'); if(wr) wr.style.setProperty('--p',wp.toFixed(1));
     const wpEl=$('#hcWaterPct'); if(wpEl) wpEl.textContent=Math.round(wp);
   }
-  const p=periodInfo(myId);
-  if($('#hcPeriod')){
-    let k='未记录', st='点一下记录最近一次开始日';
-    if(p.has&&p.future) k='待开始';
-    else if(p.has&&p.inPeriod){ k='第 '+p.dayNo+' 天'; st=p.rest?('经期中 · 前 3 天休息'):('经期中 · 预计 '+fmtDate(p.nextStart)); }
-    else if(p.has){ k='还有 '+p.toNext+' 天'; st='距下次开始'; }
-    $('#hcPeriod').textContent=k;
-    $('#hcPeriodSub').textContent=st;
+  const bi=bowelInfo();
+  if($('#hcBowel')){
+    $('#hcBowel').textContent=bi.hasToday?'已记录':'未记录';
+    $('#hcBowelSub').textContent=bi.hasToday
+      ? ('连续 '+bi.streak+' 天 · 点按钮可撤销')
+      : (bi.gap!==null?('上次 '+fmtDate(bi.last)+' · '+bi.gap+' 天前'):'点一下记录今天');
+    const bwBtn=$('[data-action="bowel-toggle"]');
+    if(bwBtn) bwBtn.textContent=bi.hasToday?'撤销今天':'今天排了';
   }
   const st2=workoutStats(t.slice(0,7));
   if($('#hwToday')) $('#hwToday').textContent='今日 '+burn+' kcal'+riceHint(burn);
@@ -2989,6 +3002,17 @@ function bind(){
       if(!identityLocked()){ identityModal(true); return; }
       if(!confirm('当前身份是「'+me().name+'」。\n\n确认要重新选择身份吗？此入口仅供选错时更正使用。')) return;
       identityEditMode=true; identityModal(false);
+    }
+    else if(a==='bowel-toggle'){
+      if(!myId){ identityModal(true); return; }
+      const t=today();
+      const cur=live(state.bowel||[]).find(x=>x.memberId===myId&&x.date===t);
+      commit(()=>{
+        if(!Array.isArray(state.bowel)) state.bowel=[];
+        if(cur){ cur.deleted=true; cur.ts=Date.now(); }
+        else state.bowel.push({id:uid('bw'),memberId:myId,date:t,ts:Date.now()});
+      });
+      toast(cur?'已撤销今天的记录':'已记录今天 · 仅本机');
     }
     else if(a==='water-plus'||a==='water-minus'){ waterQuick(a==='water-plus'?1:-1); }
     else if(a==='edit-intake'){ if(!myId){ identityModal(true); return; } intakeModal(); }
