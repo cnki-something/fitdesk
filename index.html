@@ -726,11 +726,9 @@ a{color:var(--main-d)}
         </details>
       </div>
       <div class="card">
-        <h3><span class="ic">📊</span>近 7 天跳操消耗</h3>
-        <p class="desc">按天叠加消耗，直观看到一周的运动节奏。</p>
-        <div id="barChart"></div>
-        <div class="divider"></div>
-        <div id="weekSummary"></div>
+        <h3><span class="ic">📐</span>腰围数据</h3>
+        <p class="desc">腰围比体重更直观反映减脂效果；图上每个点是最近一次记录。</p>
+        <div id="waistCard"></div>
       </div>
     </div>
   </section>
@@ -2021,6 +2019,41 @@ function renderWeightCal(){
 function waistSeries(){
   return sortDate(live(state.weights).filter(w=>w.memberId===myId&&num(w.waist)>0));
 }
+function renderWaistCard(){
+  const el=$('#waistCard'); if(!el) return;
+  const ser=waistSeries();
+  if(!ser.length){
+    el.innerHTML='<div class="note">还没有腰围记录。在首页体重卡里填一次，或在「体重」页补录。</div>'+
+      '<div class="btn-row" style="margin-top:10px"><button class="btn btn-warm btn-block" data-tab="home">去记录腰围</button></div>';
+    return;
+  }
+  const last=ser[ser.length-1], firstW=num(ser[0].waist), wa=num(last.waist);
+  const dW=(ser.length>1&&firstW>0)?wa-firstW:null;
+  const pts=ser.slice(-8), vals=pts.map(x=>num(x.waist));
+  const mn=Math.min(...vals), mx=Math.max(...vals), span=Math.max(0.5,mx-mn);
+  const W=680,H=150,P={l:46,r:14,t:16,b:24};
+  const iw=W-P.l-P.r, ih=H-P.t-P.b;
+  const px=i=>(pts.length===1?P.l+iw/2:P.l+i*iw/(pts.length-1));
+  const py=v=>P.t+(1-(v-mn)/span)*ih;
+  let svg='<line x1="'+P.l+'" y1="'+(H-P.b)+'" x2="'+(W-P.r)+'" y2="'+(H-P.b)+'" stroke="#f7e7ed"/>';
+  if(pts.length>1){
+    const pl=pts.map((x,i)=>(i?' ':'')+px(i).toFixed(1)+','+py(vals[i]).toFixed(1)).join('');
+    svg+='<polyline fill="none" stroke="#c95f88" stroke-width="2.5" points="'+pl+'"/>';
+  }
+  pts.forEach((x,i)=>{
+    svg+='<circle cx="'+px(i).toFixed(1)+'" cy="'+py(vals[i]).toFixed(1)+'" r="3.5" fill="'+(me().color||COLORS[0])+'"><title>'+x.date+' 腰围 '+num(x.waist).toFixed(1)+' cm</title></circle>';
+  });
+  svg+='<text x="'+px(0).toFixed(1)+'" y="'+(py(vals[0])-8).toFixed(1)+'" font-size="11" fill="#a95274">'+vals[0].toFixed(1)+'</text>';
+  if(pts.length>1) svg+='<text x="'+px(pts.length-1).toFixed(1)+'" y="'+(py(vals[pts.length-1])-8).toFixed(1)+'" text-anchor="end" font-size="11" fill="#a95274">'+vals[vals.length-1].toFixed(1)+'</text>';
+  svg+='<text x="'+P.l+'" y="'+(H-7)+'" font-size="11" fill="#a98d9c">'+fmtDate(pts[0].date)+'</text>';
+  if(pts.length>1) svg+='<text x="'+(W-P.r)+'" y="'+(H-7)+'" font-size="11" fill="#a98d9c" text-anchor="end">'+fmtDate(pts[pts.length-1].date)+'</text>';
+  const up=dW!==null&&dW>0;
+  el.innerHTML='<svg class="chart" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+svg+'</svg>'+
+    '<div class="divider"></div>'+
+    '<div class="stat-line"><span>最近腰围（'+fmtDate(last.date)+'）</span><b>'+wa.toFixed(1)+' cm</b></div>'+
+    '<div class="stat-line"><span>较首次'+(firstW>0?'（'+firstW.toFixed(1)+' cm）':'')+'</span><b>'+(dW===null?'—':((up?'+':'')+dW.toFixed(1)+' cm'))+'</b></div>'+
+    '<div class="btn-row" style="margin-top:10px"><button class="btn btn-warm btn-block" data-tab="home">去记录腰围</button></div>';
+}
 function renderTrend(){
   renderWeightCal();
   renderTrendChart();
@@ -2051,31 +2084,7 @@ function renderTrend(){
     return '<div class="item">'+avatarHTML(me(),26)+'<div class="body"><div class="t1">'+esc(w.date)+'</div><div class="t2">'+esc(me().name)+(wa>0?' · 腰围 '+wa.toFixed(1)+' cm':'')+'</div></div><div class="num">'+(kg>0?kg.toFixed(2)+' <span class="mini">kg</span>':'<span class="mini">仅腰围</span>')+'</div>'+delBtn('weights',w.id,w.memberId)+'</div>';
   }).join(''):emptyHTML('📏','暂无体重 / 腰围记录');
 
-  const days=[]; for(let i=6;i>=0;i--) days.push(addDays(today(),-i));
-  const per=days.map(d=>[kcalSum(workoutsOf(myId,d))]);
-  const maxV=Math.max(300,...per.map(a=>a[0]));
-  const BW=680,BH=190,BP={l:34,r:10,t:12,b:26};
-  const bw=(BW-BP.l-BP.r)/7;
-  let bars='';
-  for(let i=0;i<=3;i++){
-    const y=BP.t+(BH-BP.t-BP.b)*i/3, v=Math.round(maxV*(1-i/3));
-    bars+='<line x1="'+BP.l+'" y1="'+y+'" x2="'+(BW-BP.r)+'" y2="'+y+'" stroke="#f7e7ed"/><text x="'+(BP.l-7)+'" y="'+(y+3.5)+'" text-anchor="end">'+v+'</text>';
-  }
-  per.forEach((arr,i)=>{
-    const x=BP.l+i*bw+bw*0.22, w=bw*0.56, v=arr[0], h=(v/maxV)*(BH-BP.t-BP.b);
-    if(h>0){
-      bars+='<rect x="'+x+'" y="'+(BH-BP.b-h)+'" width="'+w+'" height="'+h+'" fill="'+(me().color||COLORS[0])+'" rx="3"><title>'+days[i]+' '+esc(me().name)+' '+v+' kcal'+riceHint(v)+'</title></rect>';
-    }
-    bars+='<text x="'+(x+w/2)+'" y="'+(BH-8)+'" text-anchor="middle">'+fmtDate(days[i])+'</text>';
-  });
-  const barEl=$('#barChart');
-  if(barEl) barEl.innerHTML='<svg class="chart" viewBox="0 0 '+BW+' '+BH+'" preserveAspectRatio="xMidYMid meet">'+bars+'</svg>';
-  const goal=num(state.settings.weeklyGoal)||2400, wk=weekKcal();
-  const sumEl=$('#weekSummary');
-  if(sumEl) sumEl.innerHTML='<div class="stat-line"><span>我的本周累计（自 '+fmtDate(weekStart())+'）</span><b>'+wk+' kcal'+riceHint(wk)+'</b></div>'+
-    '<div class="stat-line"><span>周目标</span><b>'+goal+' kcal · '+riceTag(goal,true)+'</b></div>'+
-    '<div class="pbar" style="margin-top:10px"><i style="width:'+clamp(wk/goal*100,0,100)+'%"></i></div>'+
-    '<div class="mini" style="margin-top:6px">已完成 '+Math.round(wk/goal*100)+'%'+(wk>=goal?' · 目标达成 🎉':' · 继续加油')+'</div>';
+  renderWaistCard();
 }
 
 /* ---------------- water settings helpers ---------------- */
