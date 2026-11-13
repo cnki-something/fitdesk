@@ -1520,14 +1520,41 @@ function renderTrendChart(){
     (kr.has?'<span><i style="background:#8ea0ff"></i>体重 kg（左轴）</span>':'')+
     (wr.has?'<span><i style="background:#c95f88"></i>腰围 cm（右轴）</span>':'')+
     (ws.count===1?'<span>再记一次腰围就能连成线</span>':'')+
+    '<span style="color:#a98d9c">按住图表左右滑动可看每天数据</span>'+
     '</div>';
   const lastK=kp.length?num(kp[kp.length-1].kg):0, lastW=wp.length?num(wp[wp.length-1].waist):0;
-  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+grid+
+  box.innerHTML='<div class="wt-wrap" style="position:relative"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="touch-action:pan-y">'+grid+
     (ks.path?'<path d="'+ks.path+'" fill="none" stroke="#8ea0ff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>':'')+
     (ws.path?'<path d="'+ws.path+'" fill="none" stroke="#c95f88" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>':'')+
-    ks.dots+ws.dots+dates+'</svg>'+legend+
+    ks.dots+ws.dots+dates+
+    '<line id="wtCursor" x1="0" y1="'+T+'" x2="0" y2="'+(H-B)+'" stroke="#c95f88" stroke-width="1.2" stroke-dasharray="3 3" visibility="hidden"/>'+
+    '</svg><div id="wtTip" style="display:none;position:absolute;top:2px;transform:translateX(-50%);background:#fff;border:1px solid #f0c9d8;border-radius:10px;padding:5px 10px;font-size:12px;color:#5c4356;box-shadow:0 4px 14px rgba(0,0,0,.12);white-space:nowrap;pointer-events:none;z-index:5"></div></div>'+legend+
     '<div class="wt-lb"><span>'+fmtDate(all[0].date)+' 起 · 共 '+all.length+' 次</span>'+
     '<span>'+(lastK>0?'最新 '+lastK.toFixed(2)+' kg':'')+(lastK>0&&lastW>0?' · ':'')+(lastW>0?'腰围 '+lastW.toFixed(1)+' cm':'')+'</span></div>';
+  /* 点击 / 按住左右滑动：显示对应日期的体重与腰围读数 */
+  const wrapEl=box.querySelector('.wt-wrap'), svgEl=wrapEl.querySelector('svg'),
+        cursor=box.querySelector('#wtCursor'), tipEl=box.querySelector('#wtTip');
+  const hideTip=()=>{ tipEl.style.display='none'; cursor.setAttribute('visibility','hidden'); };
+  const probe=e=>{
+    const rect=svgEl.getBoundingClientRect();
+    const vx=((e.clientX-rect.left)/rect.width)*W;
+    let best=-1,bd=1e9;
+    all.forEach((w,i)=>{ const d=Math.abs(X(i)-vx); if(d<bd){bd=d;best=i;} });
+    const th=Math.max(20,(W-L-R)/Math.max(1,all.length-1)/1.5);
+    if(best<0||bd>th){ hideTip(); return; }
+    const w=all[best], kgv=num(w.kg), wav=num(w.waist);
+    tipEl.innerHTML='<b>'+fmtDate(w.date)+'</b>　体重 '+(kgv>0?kgv.toFixed(2)+' kg':'—')+' · 腰围 '+(wav>0?wav.toFixed(1)+' cm':'—');
+    tipEl.style.display='block';
+    tipEl.style.left=clamp((X(best)/W)*rect.width,70,rect.width-70)+'px';
+    cursor.setAttribute('x1',X(best).toFixed(1));
+    cursor.setAttribute('x2',X(best).toFixed(1));
+    cursor.setAttribute('visibility','visible');
+  };
+  let probing=false;
+  svgEl.addEventListener('pointerdown',e=>{ probing=true; try{ svgEl.setPointerCapture(e.pointerId); }catch(err){} probe(e); });
+  svgEl.addEventListener('pointermove',e=>{ if(probing) probe(e); });
+  svgEl.addEventListener('pointerup',()=>{ probing=false; });
+  svgEl.addEventListener('pointercancel',()=>{ probing=false; hideTip(); });
 }
 function bowelInfo(){
   const t=today();
