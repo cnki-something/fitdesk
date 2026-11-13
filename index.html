@@ -581,8 +581,8 @@ a{color:var(--main-d)}
         <div class="hc-sub" id="hcWaterSub">目标 —</div>
         <button class="hc-btn" data-action="water-plus">＋ 喝一杯</button>
       </div>
-      <div class="hcard">
-        <div class="hc-top"><span>🚽 排便管理</span></div>
+      <div class="hcard" data-action="bowel-cal" title="点一下查看排便日历">
+        <div class="hc-top"><span>🚽 排便管理</span><span class="go">›</span></div>
         <div class="hc-big" id="hcBowel">未记录</div>
         <div class="hc-sub" id="hcBowelSub">点一下记录今天</div>
         <button class="hc-btn" data-action="bowel-toggle">今天排了</button>
@@ -1193,6 +1193,7 @@ let trendRange = 30;
 let trendMetric = 'weight';
 let trendSel = null;   // 当前点选的节点日期（点击后显示数据气泡）
 let periodMonth = '';  // 经期日历当前月份 YYYY-MM
+let bowelMonth = '';   // 排便日历当前月份 YYYY-MM
 let wcalMonth = '';    // 打卡日历当前月份 YYYY-MM
 let wkgMonth = '';     // 体重日历当前月份 YYYY-MM
 let lastSyncAt = 0;
@@ -1542,6 +1543,39 @@ function bowelInfo(){
   let gap=null;
   if(last){ gap=0; let c=last; while(c<t&&gap<400){ c=addDays(c,1); gap++; } }
   return {hasToday:hasToday,streak:streak,last:last,gap:gap,count:arr.length};
+}
+function bcalMonth(){ if(!bowelMonth) bowelMonth=today().slice(0,7); return bowelMonth; }
+function bowelModal(){
+  bowelMonth=today().slice(0,7);
+  showModal('<h3>🚽 排便日历</h3><div class="mdesc">粉色的日子表示当天已记录。点日期可补记或取消，记录只存在本机。</div>'+
+    '<div class="pcal-head"><button type="button" data-action="bowel-prev">‹</button><b id="bcalTitle">—</b><button type="button" data-action="bowel-next">›</button></div>'+
+    '<div class="pcal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>'+
+    '<div class="pcal-grid" id="bcalGrid"></div>'+
+    '<div class="note" id="bcalStat" style="margin-top:12px"></div>'+
+    '<div class="btn-row" style="margin-top:12px"><button class="btn btn-ghost btn-block" data-action="close-modal">关闭</button></div>');
+  renderBowelCal();
+}
+function renderBowelCal(){
+  const parts=bcalMonth().split('-').map(Number), Y=parts[0], M=parts[1];
+  const ttl=$('#bcalTitle'); if(ttl) ttl.textContent=Y+'年'+M+'月';
+  const g=$('#bcalGrid'); if(!g) return;
+  const arr=live(state.bowel||[]).filter(x=>x.memberId===myId);
+  const set=new Set(arr.map(x=>x.date));
+  const ym=Y+'-'+String(M).padStart(2,'0');
+  const t=today(), padN=(new Date(Y,M-1,1).getDay()+6)%7, dim=new Date(Y,M,0).getDate();
+  let cells='';
+  for(let i=0;i<padN;i++) cells+='<div class="pcal-day out"></div>';
+  for(let d=1;d<=dim;d++){
+    const ds=ym+'-'+String(d).padStart(2,'0'), done=set.has(ds), future=ds>t;
+    const sty=(done?'background:#c95f88;color:#fff;font-weight:750;':'')+(future?'':'cursor:pointer;');
+    cells+='<div class="pcal-day'+(done?' bcal-done':'')+(ds===t?' today':'')+(future?' out':'')+'"'+
+      (sty?' style="'+sty+'"':'')+(future?'':' data-action="bowel-day" data-date="'+ds+'"')+'>'+d+'</div>';
+  }
+  g.innerHTML=cells;
+  const bi=bowelInfo();
+  const monthDays=[...set].filter(d=>d.slice(0,7)===ym).length;
+  const st=$('#bcalStat');
+  if(st) st.innerHTML='<b>本月 '+monthDays+' 天</b>有记录 · 当前连续 '+bi.streak+' 天 · 累计 '+bi.count+' 天';
 }
 function renderHomeCards(){
   const b=budget(myId), t=today(), burn=todayKcal();
@@ -3013,6 +3047,24 @@ function bind(){
         else state.bowel.push({id:uid('bw'),memberId:myId,date:t,ts:Date.now()});
       });
       toast(cur?'已撤销今天的记录':'已记录今天 · 仅本机');
+    }
+    else if(a==='bowel-cal'){ bowelModal(); }
+    else if(a==='bowel-prev'||a==='bowel-next'){
+      const parts=bcalMonth().split('-').map(Number);
+      const d=new Date(parts[0],parts[1]-1+(a==='bowel-next'?1:-1),1);
+      bowelMonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+      renderBowelCal();
+    }
+    else if(a==='bowel-day'){
+      const ds=b.dataset.date; if(!ds||!myId) return;
+      const cur=live(state.bowel||[]).find(x=>x.memberId===myId&&x.date===ds);
+      commit(()=>{
+        if(!Array.isArray(state.bowel)) state.bowel=[];
+        if(cur){ cur.deleted=true; cur.ts=Date.now(); }
+        else state.bowel.push({id:uid('bw'),memberId:myId,date:ds,ts:Date.now()});
+      });
+      renderBowelCal();
+      toast(cur?'已取消 '+fmtDate(ds)+' 的记录':'已补记 '+fmtDate(ds));
     }
     else if(a==='water-plus'||a==='water-minus'){ waterQuick(a==='water-plus'?1:-1); }
     else if(a==='edit-intake'){ if(!myId){ identityModal(true); return; } intakeModal(); }
