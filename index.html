@@ -507,14 +507,14 @@ a{color:var(--main-d)}
     <div class="date-line"><span id="bigDate">—</span><b class="wd" id="bigWeek">—</b></div>
   </div>
 
-  <div class="quote">
+  <div class="quote" style="display:none">
     <div class="q-badge">🌸 每日一句</div>
     <div class="q-cn" id="quoteCn"></div>
     <div class="q-en" id="quoteEn"></div>
     <div class="kitty-deco kitty-slot"></div>
   </div>
 
-  <div class="card" id="shareBanner" style="border-color:#f2c4d6;background:linear-gradient(120deg,#fff,#fdeaf1);display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px">
+  <div class="card" id="shareBanner" style="border-color:#f2c4d6;background:linear-gradient(120deg,#fff,#fdeaf1);display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px;display:none">
     <div style="flex:1;min-width:210px">
       <h3 style="font-size:14px;margin-bottom:3px" id="shareBannerTitle">💾 目前仅本机记录</h3>
       <div class="mini" id="shareBannerDesc">在「设置 → 双人共享」创建房间并邀请同伴后，两人的当日体重与今日消耗就会自动互相同步。</div>
@@ -587,7 +587,7 @@ a{color:var(--main-d)}
         <div class="hc-sub" id="hcBowelSub">点一下记录今天</div>
         <button class="hc-btn" data-action="bowel-toggle">今天排了</button>
       </div>
-      <div class="hcard full" data-tab="records">
+      <div class="hcard full" data-tab="records" style="display:none">
         <div class="hc-top"><span>📊 数据看板</span><span class="go">›</span></div>
         <div class="hc-big" id="hcRecords">0<small>天</small></div>
         <div class="hc-sub" id="hcRecordsSub">累计打卡</div>
