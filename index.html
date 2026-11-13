@@ -737,8 +737,26 @@ a{color:var(--main-d)}
 
   <!-- ============ 饮食 ============ -->
   <section id="tab-diet" class="hidden">
+    <div class="grid" style="margin-top:20px">
+      <div class="card">
+        <h3><span class="ic">🍽️</span>记录今天吃了什么</h3>
+        <form data-form="meal">
+          <div class="form-row r2">
+            <div class="field"><label>餐次</label><select id="mSlot"><option>早餐</option><option>午餐</option><option>晚餐</option><option>加餐</option></select></div>
+            <div class="field"><label>估算热量（kcal）</label><input id="mKcal" type="number" min="0" max="3000" placeholder="450"></div>
+          </div>
+          <div class="form-row"><div class="field"><label>内容</label><input id="mText" maxlength="60" placeholder="例如：糙米饭 + 鸡胸 + 西兰花"></div></div>
+          <button class="btn btn-primary btn-block" type="submit">保存这一餐</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3><span class="ic">🧾</span>今日饮食流水</h3>
+        <div class="desc" id="mealSummary"></div>
+        <div class="list" id="mealList"></div>
+      </div>
+    </div>
 
-    <div class="card pm-card" style="margin-top:20px">
+    <div class="card pm-card" style="margin-top:20px;display:none">
       <div class="sec-head"><h3><span class="ic">📷</span>三餐照片 · 热量估算与建议</h3><span class="tag" id="pmTag">零配置可用</span></div>
       <p class="desc">拍下这一餐 → 点选吃了什么 → 自动估算热量与蛋白质，再按你的今日预算生成具体建议。照片会压缩后保存在本机，不会上传或同步给对方。</p>
       <div class="pm-top">
@@ -790,24 +808,6 @@ a{color:var(--main-d)}
       <div class="note" style="margin-top:13px" id="dietTip"></div>
     </div>
 
-    <div class="grid">
-      <div class="card">
-        <h3><span class="ic">🍽️</span>记录今天吃了什么</h3>
-        <form data-form="meal">
-          <div class="form-row r2">
-            <div class="field"><label>餐次</label><select id="mSlot"><option>早餐</option><option>午餐</option><option>晚餐</option><option>加餐</option></select></div>
-            <div class="field"><label>估算热量（kcal）</label><input id="mKcal" type="number" min="0" max="3000" placeholder="450"></div>
-          </div>
-          <div class="form-row"><div class="field"><label>内容</label><input id="mText" maxlength="60" placeholder="例如：糙米饭 + 鸡胸 + 西兰花"></div></div>
-          <button class="btn btn-primary btn-block" type="submit">保存这一餐</button>
-        </form>
-      </div>
-      <div class="card">
-        <h3><span class="ic">🧾</span>今日饮食流水</h3>
-        <div class="desc" id="mealSummary"></div>
-        <div class="list" id="mealList"></div>
-      </div>
-    </div>
   </section>
 
   <!-- ============ 喝水 ============ -->
