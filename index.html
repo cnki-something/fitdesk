@@ -1658,7 +1658,7 @@ function dayDelta(mid){
 /* 对比数据：较起始 / 较昨日，两人各一列 */
 function renderTodayCompare(){
   const ms=sharedMembers();
-  const startOf=m=>{ const d=weightDelta(m.id); return d.has?((d.v>0?'+':'')+d.v.toFixed(2)+' kg'+(d.base?' <span class="mini">基准 '+d.base.toFixed(2)+'</span>':'')):'—'; };
+  const startOf=m=>{ const d=weightDelta(m.id); return d.has?((d.v>0?'+':'')+d.v.toFixed(2)+' kg'):'—'; };
   const dayOf=m=>{ const d=dayDelta(m.id); return d.has
     ? (d.v>0?'+':'')+d.v.toFixed(2)+' kg'+(d.label?' <span class="mini">'+esc(d.label)+'</span>':'') : '—'; };
   $('#todayCompare').innerHTML='<thead><tr><th>对比项</th>'+ms.map(m=>
