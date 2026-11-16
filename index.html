@@ -1933,7 +1933,7 @@ function renderWorkoutCal(){
     const isRest=pf.indexOf('rest')>=0, isPeriod=pf.indexOf('period')>=0;
     const pfCls=isRest?' pf-rest':(isPeriod?' pf-period':'');
     const pfTxt=isRest?' · 🌙 经期第 1–3 天 · 休息':(isPeriod?' · 🌸 经期':'');
-    cells+='<div class="pcal-day'+lv+pfCls+(ds===today()?' today':'')+'" title="'+ds+(v>0?' · '+v+' kcal'+riceHint(v):' · 未打卡')+pfTxt+'">'+d+(pf?'<i class="pf-dot"></i>':'')+'</div>';
+    cells+='<div class="pcal-day'+lv+pfCls+(ds===today()?' today':'')+'" data-action="wcal-day" data-date="'+ds+'" style="cursor:pointer" title="'+ds+(v>0?' · '+v+' kcal'+riceHint(v):' · 未打卡')+pfTxt+'">'+d+(pf?'<i class="pf-dot"></i>':'')+'</div>';
   }
   g.innerHTML=cells;
   const pn=$('#wcalPeriodNote');
@@ -1949,6 +1949,29 @@ function renderWorkoutCal(){
     {lb:'累计打卡',val:st.days,unit:'天',hint:'总消耗 '+st.totalK+' kcal'+riceHint(st.totalK)},
     {lb:'平均每次',val:st.avg,unit:'kcal',hint:'按 '+st.times+' 次打卡计算'+(st.avg>0?' · '+riceTag(st.avg,true):'')}
   ].map(k=>'<div class="kpi"><div class="lb">'+k.lb+'</div><div class="val">'+k.val+'<small>'+k.unit+'</small></div><div class="hint">'+esc(k.hint)+'</div></div>').join('');
+}
+function wcalDayModal(ds){
+  if(!ds) return;
+  const list=sortTs(live(state.workouts||[]).filter(x=>x.memberId===myId&&x.date===ds));
+  const ymY=+ds.slice(0,4), ymM=+ds.slice(5,7)-1;
+  const pmark=(pcalMap(ymY,ymM))[ds]||'';
+  const pfTxt=pmark.indexOf('rest')>=0?' 🌙 经期第 1–3 天（休息）':(pmark.indexOf('period')>=0?' 🌸 经期':'');
+  const totalK=list.reduce((a,x)=>a+num(x.kcal),0);
+  let body='';
+  if(list.length){
+    body=list.map(x=>{
+      const mins=num(x.minutes);
+      return '<div class="item" style="align-items:flex-start"><div class="body" style="flex:1">'+
+        '<div class="t1">'+esc(x.type||'跳操')+(mins>0?' <span class="mini">· '+mins+' 分钟</span>':'')+'</div>'+
+        '<div class="t2">'+(x.note?esc(x.note)+' · ':'')+(x.manual?'手动记录':'按体重自动估算')+' · 消耗 <b>'+num(x.kcal)+' kcal</b>'+riceHint(num(x.kcal))+'</div></div>'+
+        '</div>';
+    }).join('')+
+    '<div class="note" style="margin-top:10px">当天合计 <b>'+totalK+' kcal</b>'+riceHint(totalK)+' · 共 '+list.length+' 次打卡'+pfTxt+'</div>';
+  }else{
+    body='<div class="note" style="margin:0">'+(totalK>0?'':'这一天还没有打卡记录 🛌'+(pfTxt?'（'+pfTxt.trim()+'）':'')+'。')+'</div>';
+  }
+  showModal('<h3>📅 '+fmtDate(ds)+' · 跳操记录'+pfTxt+'</h3>'+body+
+    '<div class="btn-row" style="margin-top:12px"><button class="btn btn-ghost btn-block" data-action="close-modal">关闭</button></div>');
 }
 function renderCourses(){
   const cs=live(state.courses||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
@@ -3355,6 +3378,7 @@ function bind(){
       const arr=planSelArr(c.sess); arr[si]=!arr[si]; planSel=arr;
       renderHomePlan(); renderPlanPage();
     }
+    else if(a==='wcal-day'){ wcalDayModal(b.dataset.date); }
     else if(a==='plan-checkin'){ planCheckIn(); }
     else if(a==='plan-undo'){ planUndo(); }
     else if(a==='water-plus'||a==='water-minus'){ waterQuick(a==='water-plus'?1:-1); }
