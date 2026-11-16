@@ -2094,12 +2094,15 @@ function planLinesHtml(sess){
 function planCheckIn(){
   const c=planCur();
   if(c.done){ toast('今天已经打卡过了，明天继续下一练'); return; }
+  if(planSel&&planSel.length!==c.sess.lines.length) planSel=null;
+  const sel=planSelArr(c.sess), selN=sel.filter(Boolean).length;
+  if(selN===0){ toast('请至少勾选一个今天跟练的视频'); return; }
   const pi=periodInfo(myId);
   if(pi.has&&pi.rest&&!pi.future&&!confirm('今天是经期前 3 天（经期第 '+pi.dayNo+' 天），按约定不安排跳操。确定还要记录这次运动吗？')) return;
   const p=c.p, sess=c.sess;
   const hwRaw=$('#hpKcal')?String($('#hpKcal').value).trim():'';
   const manual=hwRaw!=='';
-  const kcal=manual?clamp(num(hwRaw),0,2000):c.kcal;
+  const kcal=manual?clamp(num(hwRaw),0,2000):planSelKcal(c.sess,sel);
   const type='第'+p.phase+'阶段·第'+c.week+'周·'+sess.tag;
   const id=uid('w');
   const np={start:p.start,phase:p.phase,phaseDone:p.phaseDone+1,asked3:p.asked3,went3:p.went3,
@@ -2108,10 +2111,11 @@ function planCheckIn(){
   if(np.phase===1&&np.phaseDone>=5){ np.phase=2; np.phaseDone=0; }
   else if(np.phase===2&&np.phaseDone>=15&&!np.asked3){ np.asked3=true; askPhase3=true; }
   commit(()=>{
-    state.workouts.push({id:id,memberId:myId,date:today(),type:type,minutes:sess.mins,level:'mid',kcal:kcal,manual:manual,note:'',ts:Date.now()});
+    state.workouts.push({id:id,memberId:myId,date:today(),type:type,minutes:sess.mins,level:'mid',kcal:kcal,manual:manual,note:'完成 '+selN+'/'+sess.lines.length+' 段',ts:Date.now()});
     savePlanRaw(np);
   });
-  toast('打卡成功 · 第'+c.week+'周第'+(c.idx+1)+'练 · '+kcal+' kcal'+riceHint(kcal)+syncTag());
+  planSel=null;
+  toast('打卡成功 · 完成 '+selN+'/'+sess.lines.length+' 段 · '+kcal+' kcal'+riceHint(kcal)+syncTag());
   if(askPhase3){
     setTimeout(()=>{ if(confirm('第 2 阶段三周（15 练）已完成！\n\n是否开启第 3 阶段：有氧 + 无氧 + 力量？\n（力量训练建议备一对 1-2kg 小哑铃）\n\n点「取消」则继续按第 2 阶段循环训练。')){
       const q=loadPlan(); q.phase=3; q.phaseDone=0; q.went3=true; savePlanRaw(q); renderAll(); toast('已进入第 3 阶段 💪');
@@ -2126,11 +2130,21 @@ function planUndo(){
     savePlanRaw({start:p.start,phase:p.prev.phase,phaseDone:p.prev.phaseDone,asked3:p.asked3,went3:p.went3,
       lastDate:p.prev.lastDate,lastId:'',prev:null});
   });
+  planSel=null;
   toast('已撤销最近一次计划打卡，课程已回到今日这一练');
 }
-function planLineRow(l){
-  return '<div style="display:flex;align-items:flex-start;gap:8px;margin:3px 0">'+
-    '<span style="flex:1;font-size:13px;line-height:1.7;color:'+(PLAN_COL[l.k]||'#5c4356')+'">'+esc(l.text)+'</span>'+
+let planSel=null;  // 当前会话的逐段勾选；null=默认全选
+function planSelArr(sess){ return sess.lines.map((l,i)=>planSel? !!planSel[i] : true); }
+function planSelKcal(sess,sel){
+  const mins=sess.lines.reduce((a,l,i)=>a+(sel[i]?lmin(l.text):0),0);
+  return Math.round(sess.met*3.5*latestWeight(myId)/200*Math.max(1,mins));
+}
+function lmin(t){ const m=String(t).match(/(\d+)\s*分钟/); return m?+m[1]:0; }
+function planLineRow(l,i,sel){
+  const ring=(sel===undefined)?'':
+    '<span data-action="plan-sel" data-i="'+i+'" style="flex:none;cursor:pointer;user-select:none;font-size:15px;line-height:1.6;color:'+(sel?'#c95f88':'#c9b8c0')+'" title="'+(sel?'点击取消这一段':'点击勾选这一段')+'">'+(sel?'✓':'○')+'</span>';
+  return '<div style="display:flex;align-items:flex-start;gap:8px;margin:3px 0">'+ring+
+    '<span style="flex:1;font-size:13px;line-height:1.7;color:'+(PLAN_COL[l.k]||'#5c4356')+(sel===true?';font-weight:600':'')+'">'+esc(l.text)+'</span>'+
     (l.kw?'<a href="'+PLAN_BILI(l.kw)+'" target="_blank" rel="noopener" style="flex:none;font-size:11.5px;color:#c95f88;text-decoration:none;border:1px solid #f0c9d8;border-radius:8px;padding:2px 8px;background:#fff">▶ 跟练</a>':'')+
     '</div>';
 }
@@ -2144,17 +2158,20 @@ function renderPlanPage(){
     '<div class="mini" style="margin-top:4px">'+esc(c.ph.desc)+'</div>'+
     '<div class="pbar" style="margin-top:8px"><i style="width:'+((c.p.phaseDone%5)/5*100).toFixed(0)+'%"></i></div>'+
     '<div class="mini" style="margin-top:4px">本周打卡 '+Math.floor(c.p.phaseDone%5)+'/5'+(c.p.phase===2?' · 第 '+c.round+' 轮':'')+(c.p.phase===1&&c.total?' · 阶段进度 '+c.p.phaseDone+'/'+c.total:'')+'</div></div>';
+  if(planSel&&planSel.length!==c.sess.lines.length) planSel=null;
+  const sel=planSelArr(c.sess), selN=sel.filter(Boolean).length;
+  const kc=planSelKcal(c.sess,sel);
   tdy.innerHTML='<div class="item" style="align-items:flex-start"><div class="body" style="flex:1">'+
     '<div class="t1"><b>今日 · 第 '+(c.idx+1)+' 练 · '+esc(c.sess.tag)+'</b></div>'+
-    c.sess.lines.map(planLineRow).join('')+
-    '<div class="t2" style="margin-top:6px">全程约 '+c.sess.mins+' 分钟 · 预估消耗 <b>'+c.kcal+' kcal</b>'+riceHint(c.kcal)+'</div></div></div>';
+    c.sess.lines.map((l,i)=>planLineRow(l,i,sel[i])).join('')+
+    '<div class="t2" style="margin-top:6px">已选 '+selN+'/'+c.sess.lines.length+' 段 · 预估消耗 <b>'+kc+' kcal</b>'+riceHint(kc)+'（点每行左侧 ✓/○ 选择跟了哪些视频）</div></div></div>';
   let ah='';
   if(c.done){
     const tw=live(state.workouts).find(x=>x.id===c.p.lastId);
     ah='<div class="note" style="margin:0">✅ 今日已打卡'+(tw?' · 消耗 '+num(tw.kcal)+' kcal'+riceHint(num(tw.kcal)):'')+'，明天将继续第 '+(c.p.phaseDone%5+1)+' 练。</div>'+
       '<div class="btn-row" style="margin-top:10px"><button class="btn btn-ghost btn-block" data-action="plan-undo">撤销今日打卡</button></div>';
   }else{
-    ah='<div class="btn-row" style="margin:0"><button class="btn btn-primary btn-block" data-action="plan-checkin">✅ 完成今日打卡（约 '+c.kcal+' kcal）</button></div>'+
+    ah='<div class="btn-row" style="margin:0"><button class="btn btn-primary btn-block" data-action="plan-checkin">✅ 完成今日打卡（已选 '+selN+' 段 · 约 '+kc+' kcal）</button></div>'+
       '<div class="mini" style="margin-top:6px;text-align:center">今天不练也没关系，就当休息日 🛌 · 打卡后自动切换到下一天的课程</div>';
   }
   act.innerHTML=ah;
@@ -2170,11 +2187,14 @@ function renderHomePlan(){
   let h='';
   if(c.done){
     const tw=live(state.workouts).find(x=>x.id===c.p.lastId);
-    h='<div class="note" style="margin:0 0 8px">✅ 今日已完成「第 '+(c.idx+1)+' 练 · '+esc(c.sess.tag)+'」'+(tw?' · 消耗 '+num(tw.kcal)+' kcal'+riceHint(num(tw.kcal)):'')+'，明天练下一课。</div>'+
+    h='<div class="note" style="margin:0 0 8px">✅ 今日已完成「第 '+(c.idx+1)+' 练 · '+esc(c.sess.tag)+'」'+(tw&&tw.note?' · '+esc(tw.note):'')+(tw?' · 消耗 '+num(tw.kcal)+' kcal'+riceHint(num(tw.kcal)):'')+'，明天练下一课。</div>'+
       '<div class="btn-row" style="margin:0"><button class="btn btn-ghost btn-block" data-action="plan-undo">撤销今日打卡</button></div>';
   }else{
-    h='<div style="margin-bottom:4px"><b style="font-size:14px">第 '+(c.idx+1)+' 练 · '+esc(c.sess.tag)+'</b> <span class="mini">约 '+c.sess.mins+' 分钟 · 约 '+c.kcal+' kcal'+riceHint(c.kcal)+'</span></div>'+
-      c.sess.lines.map(planLineRow).join('')+
+    if(planSel&&planSel.length!==c.sess.lines.length) planSel=null;
+    const sel=planSelArr(c.sess), selN=sel.filter(Boolean).length;
+    const kc=planSelKcal(c.sess,sel);
+    h='<div style="margin-bottom:4px"><b style="font-size:14px">第 '+(c.idx+1)+' 练 · '+esc(c.sess.tag)+'</b> <span class="mini">已选 '+selN+'/'+c.sess.lines.length+' 段 · 约 '+kc+' kcal'+riceHint(kc)+'</span></div>'+
+      c.sess.lines.map((l,i)=>planLineRow(l,i,sel[i])).join('')+
       '<div style="margin-top:10px"><input id="hpKcal" type="number" min="0" max="2000" placeholder="实测消耗 kcal · 选填，留空按体重自动估算" style="width:100%;box-sizing:border-box;background:#fffafb;border:1px solid var(--line);border-radius:11px;padding:10px 12px;outline:none"></div>'+
       '<div class="btn-row" style="margin-top:8px"><button class="btn btn-primary btn-block" data-action="plan-checkin">✅ 完成今日打卡</button></div>'+
       '<div class="mini" style="margin-top:6px;text-align:center">未打卡就是休息日 🛌 · 打卡后自动切换到下一天的课程</div>';
@@ -3299,6 +3319,13 @@ function bind(){
       });
       renderBowelCal();
       toast(cur?'已取消 '+fmtDate(ds)+' 的记录':'已补记 '+fmtDate(ds));
+    }
+    else if(a==='plan-sel'){
+      const si=+b.dataset.i;
+      const c=planCur();
+      if(planSel&&planSel.length!==c.sess.lines.length) planSel=null;
+      const arr=planSelArr(c.sess); arr[si]=!arr[si]; planSel=arr;
+      renderHomePlan(); renderPlanPage();
     }
     else if(a==='plan-checkin'){ planCheckIn(); }
     else if(a==='plan-undo'){ planUndo(); }
