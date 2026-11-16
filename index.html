@@ -2133,11 +2133,12 @@ function planUndo(){
   planSel=null;
   toast('已撤销最近一次计划打卡，课程已回到今日这一练');
 }
-let planSel=null;  // 当前会话的逐段勾选；null=默认全选
-function planSelArr(sess){ return sess.lines.map((l,i)=>planSel? !!planSel[i] : true); }
+let planSel=null;  // 当前会话的逐段勾选；null=默认全未选
+function planSelArr(sess){ return sess.lines.map((l,i)=>planSel? !!planSel[i] : false); }
 function planSelKcal(sess,sel){
   const mins=sess.lines.reduce((a,l,i)=>a+(sel[i]?lmin(l.text):0),0);
-  return Math.round(sess.met*3.5*latestWeight(myId)/200*Math.max(1,mins));
+  if(mins<=0) return 0;
+  return Math.round(sess.met*3.5*latestWeight(myId)/200*mins);
 }
 function lmin(t){ const m=String(t).match(/(\d+)\s*分钟/); return m?+m[1]:0; }
 function planLineRow(l,i,sel){
