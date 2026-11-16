@@ -2133,8 +2133,8 @@ function planUndo(){
   planSel=null;
   toast('已撤销最近一次计划打卡，课程已回到今日这一练');
 }
-let planSel=null;  // 当前会话的逐段勾选；null=默认全未选
-function planSelArr(sess){ return sess.lines.map((l,i)=>planSel? !!planSel[i] : false); }
+let planSel=null;  // 当前会话的逐段勾选；null=默认全选 ✓，没跟的自己点 ○ 取消
+function planSelArr(sess){ return sess.lines.map((l,i)=>planSel? !!planSel[i] : true); }
 function planSelKcal(sess,sel){
   const mins=sess.lines.reduce((a,l,i)=>a+(sel[i]?lmin(l.text):0),0);
   if(mins<=0) return 0;
