@@ -2169,8 +2169,11 @@ function renderPlanPage(){
   let ah='';
   if(c.done){
     const tw=live(state.workouts).find(x=>x.id===c.p.lastId);
-    ah='<div class="note" style="margin:0">✅ 今日已打卡'+(tw?' · 消耗 '+num(tw.kcal)+' kcal'+riceHint(num(tw.kcal)):'')+'，明天将继续第 '+(c.p.phaseDone%5+1)+' 练。</div>'+
-      '<div class="btn-row" style="margin-top:10px"><button class="btn btn-ghost btn-block" data-action="plan-undo">撤销今日打卡</button></div>';
+    const pp=c.p.prev||{phase:c.p.phase,phaseDone:Math.max(0,c.p.phaseDone-1)};
+    const pph=PLAN_PHASES[pp.phase-1], pIdx=pp.phaseDone%5, pSess=pph.sessions[pIdx], pWeek=Math.floor(pp.phaseDone/5)+1;
+    ah='<div class="note" style="margin:0">✅ 今日已完成「第 '+pWeek+' 周 第 '+(pIdx+1)+' 练 · '+esc(pSess.tag)+'」'+(tw&&tw.note?' · '+esc(tw.note):'')+(tw?' · 消耗 '+num(tw.kcal)+' kcal'+riceHint(num(tw.kcal)):'')+'。</div>'+
+      '<div class="btn-row" style="margin-top:10px"><button class="btn btn-ghost btn-block" data-action="plan-undo">撤销今日打卡</button></div>'+
+      '<div class="mini" style="margin-top:8px"><b>下一练 · 第 '+(c.idx+1)+' 练 · '+esc(c.sess.tag)+'</b>（明天打开默认从这里继续；下方课程表已高亮）</div>';
   }else{
     ah='<div class="btn-row" style="margin:0"><button class="btn btn-primary btn-block" data-action="plan-checkin">✅ 完成今日打卡（已选 '+selN+' 段 · 约 '+kc+' kcal）</button></div>'+
       '<div class="mini" style="margin-top:6px;text-align:center">今天不练也没关系，就当休息日 🛌 · 打卡后自动切换到下一天的课程</div>';
@@ -2188,8 +2191,14 @@ function renderHomePlan(){
   let h='';
   if(c.done){
     const tw=live(state.workouts).find(x=>x.id===c.p.lastId);
-    h='<div class="note" style="margin:0 0 8px">✅ 今日已完成「第 '+(c.idx+1)+' 练 · '+esc(c.sess.tag)+'」'+(tw&&tw.note?' · '+esc(tw.note):'')+(tw?' · 消耗 '+num(tw.kcal)+' kcal'+riceHint(num(tw.kcal)):'')+'，明天练下一课。</div>'+
-      '<div class="btn-row" style="margin:0"><button class="btn btn-ghost btn-block" data-action="plan-undo">撤销今日打卡</button></div>';
+    const pp=c.p.prev||{phase:c.p.phase,phaseDone:Math.max(0,c.p.phaseDone-1)};
+    const pph=PLAN_PHASES[pp.phase-1], pIdx=pp.phaseDone%5, pSess=pph.sessions[pIdx], pWeek=Math.floor(pp.phaseDone/5)+1;
+    h='<div class="note" style="margin:0 0 8px">✅ 今日已完成「第 '+pWeek+' 周 第 '+(pIdx+1)+' 练 · '+esc(pSess.tag)+'」'+(tw&&tw.note?' · '+esc(tw.note):'')+(tw?' · 消耗 '+num(tw.kcal)+' kcal'+riceHint(num(tw.kcal)):'')+'。</div>'+
+      '<div class="btn-row" style="margin:0"><button class="btn btn-ghost btn-block" data-action="plan-undo">撤销今日打卡</button></div>'+
+      '<div class="divider" style="margin:12px 0"></div>'+
+      '<div style="margin-bottom:4px"><b style="font-size:14px">明天 · 第 '+(c.idx+1)+' 练 · '+esc(c.sess.tag)+'</b> <span class="mini">约 '+c.sess.mins+' 分钟</span></div>'+
+      c.sess.lines.map(l=>planLineRow(l)).join('')+
+      '<div class="mini" style="margin-top:6px;text-align:center">明天从这里继续，勾选跟练后打卡即可；想改主意点上面的撤销。</div>';
   }else{
     if(planSel&&planSel.length!==c.sess.lines.length) planSel=null;
     const sel=planSelArr(c.sess), selN=sel.filter(Boolean).length;
