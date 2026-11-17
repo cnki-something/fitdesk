@@ -528,7 +528,7 @@ a{color:var(--main-d)}
     <div class="card wcard" data-tab="trend" style="margin-top:20px">
       <div class="sec-head"><h3><span class="ic">⚖️</span>体重</h3><span class="mini" id="wcardTime"></span></div>
       <div class="wcard-main">
-        <div class="wcard-left"><b id="wcardKg">—</b><span>kg</span>
+        <div class="wcard-left"><b id="wcardKg">—</b><span>斤</span>
           <div class="wcard-deltas"><span id="wcardDelta">还没有记录</span><span id="wcardFirst"></span></div>
         </div>
         <div class="wcard-right">
@@ -540,7 +540,7 @@ a{color:var(--main-d)}
       <div class="wcard-goal"><span id="wcardGoalText">目标未设置</span><i class="wbar"><em id="wcardGoalBar" style="width:0%"></em></i></div>
       <form data-form="hweight" data-no-nav style="margin-top:10px">
         <div class="form-row r2" style="margin-bottom:8px">
-          <div class="field"><label>体重（kg）</label><input id="hwKg" type="number" min="20" max="300" step="0.01" placeholder="例如 60.25"></div>
+          <div class="field"><label>体重（斤）</label><input id="hwKg" type="number" min="40" max="600" step="0.1" placeholder="例如 120.5"></div>
           <div class="field"><label>腰围（cm）</label><input id="hwWaist" type="number" min="30" max="200" step="0.1" placeholder="例如 68.5"></div>
         </div>
         <button class="btn btn-primary btn-block" type="submit">记录今日体重 / 腰围</button>
@@ -719,7 +719,7 @@ a{color:var(--main-d)}
     <div class="grid">
       <div class="card">
         <h3><span class="ic">📈</span>体重 / 腰围趋势</h3>
-        <p class="desc">最近 14 次记录的走势：蓝线是体重（左轴 kg），粉线是腰围（右轴 cm），悬停圆点看当次数值；两者都在首页「体重」卡记录。</p>
+        <p class="desc">最近 14 次记录的走势：蓝线是体重（左轴 斤），粉线是腰围（右轴 cm），悬停圆点看当次数值；两者都在首页「体重」卡记录。</p>
         <div class="wt-chart" id="trendChart"></div>
         <div class="divider"></div>
         <div class="tw-today" id="twToday"></div>
@@ -1480,10 +1480,10 @@ function renderTrendChart(){
   const mkRange=(pts,unit)=>{
     if(!pts.length) return {lo:0,hi:1,has:false};
     let lo=Math.min.apply(null,pts), hi=Math.max.apply(null,pts);
-    const pad=Math.max(unit==='kg'?0.3:0.5,(hi-lo)*0.25);
+    const pad=Math.max(unit==='jin'?0.6:0.5,(hi-lo)*0.25);
     return {lo:lo-pad,hi:hi+pad,has:true};
   };
-  const kr=mkRange(kp.map(w=>num(w.kg)),'kg');
+  const kr=mkRange(kp.map(w=>num(w.kg)*2),'jin');
   const wr=mkRange(wp.map(w=>num(w.waist)),'cm');
   /* 画布宽度跟随容器，避免 560 宽 viewBox 被压扁导致刻度文字变形 */
   const cw=Math.round(box.clientWidth||0);
@@ -1502,10 +1502,10 @@ function renderTrendChart(){
     if(wr.has){ const v=wr.hi-(wr.hi-wr.lo)*g/3;
       grid+='<text x="'+(W-R+5)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="start" font-size="'+fs+'" fill="#c95f88">'+v.toFixed(1)+'</text>'; }
   }
-  const series=(key,r,color,digits,unit)=>{
+  const series=(key,r,color,digits,unit,f)=>{
     let path='',dots='',started=false,count=0;
     all.forEach((w,i)=>{
-      const v=num(w[key]); if(v<=0) return;
+      const v=num(w[key])*(f||1); if(v<=0) return;
       const x=X(i), y=Y(v,r), last=i===all.length-1;
       path+=(started?' L':'M')+x.toFixed(1)+' '+y.toFixed(1);
       started=true; count++;
@@ -1514,13 +1514,13 @@ function renderTrendChart(){
     });
     return {path:path,dots:dots,count:count};
   };
-  const ks=kr.has?series('kg',kr,'#8ea0ff',2,'kg'):{path:'',dots:'',count:0};
+  const ks=kr.has?series('kg',kr,'#8ea0ff',1,'斤',2):{path:'',dots:'',count:0};
   const ws=wr.has?series('waist',wr,'#c95f88',1,'cm'):{path:'',dots:'',count:0};
   let dates='';
   all.forEach((w,i)=>{ if(i===0||i===all.length-1)
     dates+='<text x="'+X(i).toFixed(1)+'" y="'+(H-6)+'" text-anchor="'+(i===0?'start':'end')+'" font-size="'+fs+'" fill="#8b93c0">'+fmtDate(w.date)+'</text>'; });
   const legend='<div class="wt-legend">'+
-    (kr.has?'<span><i style="background:#8ea0ff"></i>体重 kg（左轴）</span>':'')+
+    (kr.has?'<span><i style="background:#8ea0ff"></i>体重 斤（左轴）</span>':'')+
     (wr.has?'<span><i style="background:#c95f88"></i>腰围 cm（右轴）</span>':'')+
     (ws.count===1?'<span>再记一次腰围就能连成线</span>':'')+
     '<span style="color:#a98d9c">按住图表左右滑动可看每天数据</span>'+
@@ -1533,7 +1533,7 @@ function renderTrendChart(){
     '<line id="wtCursor" x1="0" y1="'+T+'" x2="0" y2="'+(H-B)+'" stroke="#c95f88" stroke-width="1.2" stroke-dasharray="3 3" visibility="hidden"/>'+
     '</svg><div id="wtTip" style="display:none;position:absolute;top:2px;transform:translateX(-50%);background:#fff;border:1px solid #f0c9d8;border-radius:10px;padding:5px 10px;font-size:12px;color:#5c4356;box-shadow:0 4px 14px rgba(0,0,0,.12);white-space:nowrap;pointer-events:none;z-index:5"></div></div>'+legend+
     '<div class="wt-lb"><span>'+fmtDate(all[0].date)+' 起 · 共 '+all.length+' 次</span>'+
-    '<span>'+(lastK>0?'最新 '+lastK.toFixed(2)+' kg':'')+(lastK>0&&lastW>0?' · ':'')+(lastW>0?'腰围 '+lastW.toFixed(1)+' cm':'')+'</span></div>';
+    '<span>'+(lastK>0?'最新 '+(lastK*2).toFixed(1)+' 斤':'')+(lastK>0&&lastW>0?' · ':'')+(lastW>0?'腰围 '+lastW.toFixed(1)+' cm':'')+'</span></div>';
   /* 点击 / 按住左右滑动：显示对应日期的体重与腰围读数 */
   const wrapEl=box.querySelector('.wt-wrap'), svgEl=wrapEl.querySelector('svg'),
         cursor=box.querySelector('#wtCursor'), tipEl=box.querySelector('#wtTip');
@@ -1546,7 +1546,7 @@ function renderTrendChart(){
     const th=Math.max(20,(W-L-R)/Math.max(1,all.length-1)/1.5);
     if(best<0||bd>th){ hideTip(); return; }
     const w=all[best], kgv=num(w.kg), wav=num(w.waist);
-    tipEl.innerHTML='<b>'+fmtDate(w.date)+'</b>　体重 '+(kgv>0?kgv.toFixed(2)+' kg':'—')+' · 腰围 '+(wav>0?wav.toFixed(1)+' cm':'—');
+    tipEl.innerHTML='<b>'+fmtDate(w.date)+'</b>　体重 '+(kgv>0?(kgv*2).toFixed(1)+' 斤':'—')+' · 腰围 '+(wav>0?wav.toFixed(1)+' cm':'—');
     tipEl.style.display='block';
     tipEl.style.left=clamp((X(best)/W)*rect.width,70,rect.width-70)+'px';
     cursor.setAttribute('x1',X(best).toFixed(1));
@@ -1636,7 +1636,7 @@ function renderHomeCards(){
   const kg=ws.length?num(ws[ws.length-1].kg):0;
   const delta=ws.length>=2?num(ws[ws.length-1].kg)-num(ws[ws.length-2].kg):null;
   if($('#wcardKg')){
-    $('#wcardKg').textContent=kg>0?kg.toFixed(2):'—';
+    $('#wcardKg').textContent=kg>0?(kg*2).toFixed(1):'—';
     $('#wcardTime').textContent=weighedToday?'今日已称':(ws.length?'今日未称 · 显示 '+fmtDate(ws[ws.length-1].date):'');
     const dEl=$('#wcardDelta'), fEl=$('#wcardFirst'), bEl=$('#wcardBase');
     if(bEl) bEl.textContent='';
@@ -1644,17 +1644,17 @@ function renderHomeCards(){
     else if(delta===null){ dEl.textContent='首次记录，暂无对比'; }
     else{
       const up=delta>0, same=Math.abs(delta)<0.005;
-      dEl.innerHTML='较上次 '+(same?'持平':((up?'+':'')+delta.toFixed(2)+' kg'))+
+      dEl.innerHTML='较上次 '+(same?'持平':((up?'+':'')+(delta*2).toFixed(1)+' 斤'))+
         (up?' <span style="color:#d9534f">▲</span>':(same?'':' <span style="color:#4a9d7f">▼</span>'));
     }
     if(fEl){
       const base=weightBase(myId), cur=ws.length?num(ws[ws.length-1].kg):0;
       if(ws.length&&base.v>0){
         const fd=cur-base.v, up=fd>0, same=Math.abs(fd)<0.005;
-        fEl.innerHTML='较起始 '+(same?'持平':((up?'+':'')+fd.toFixed(2)+' kg'))+
+        fEl.innerHTML='较起始 '+(same?'持平':((up?'+':'')+(fd*2).toFixed(1)+' 斤'))+
           (up?' <span style="color:#d9534f">▲</span>':(same?'':' <span style="color:#4a9d7f">▼</span>'));
         fEl.style.color=up?'#d9534f':'#4a9d7f';
-        if(bEl) bEl.textContent='基准 '+base.v.toFixed(2)+' kg · '+(base.src==='start'?'来自「设置 → 起始体重」':'来自第一次称重记录');
+        if(bEl) bEl.textContent='基准 '+(base.v*2).toFixed(1)+' 斤 · '+(base.src==='start'?'来自「设置 → 起始体重」':'来自第一次称重记录');
       }else fEl.textContent='';
     }
     const h=num(me().height), age=num(me().age), male=me().gender==='male';
@@ -1683,7 +1683,7 @@ function renderHomeCards(){
     const st=num(me().startWeight), tg=num(me().targetWeight);
     if(st>0&&tg>0&&st>tg&&kg>0){
       const prog=clamp((st-kg)/(st-tg)*100,0,100);
-      $('#wcardGoalText').textContent='目标 '+tg.toFixed(1)+' kg · '+Math.round(prog)+'%';
+      $('#wcardGoalText').textContent='目标 '+(tg*2).toFixed(1)+' 斤 · '+Math.round(prog)+'%';
       $('#wcardGoalBar').style.width=prog+'%';
     }else{
       $('#wcardGoalText').textContent='目标未设置 · 去设置填起始与目标体重';
@@ -1749,9 +1749,9 @@ function dayDelta(mid){
 /* 对比数据：较起始 / 较昨日，两人各一列 */
 function renderTodayCompare(){
   const ms=sharedMembers();
-  const startOf=m=>{ const d=weightDelta(m.id); return d.has?((d.v>0?'+':'')+d.v.toFixed(2)+' kg'):'—'; };
+  const startOf=m=>{ const d=weightDelta(m.id); return d.has?((d.v>0?'+':'')+(d.v*2).toFixed(1)+' 斤'):'—'; };
   const dayOf=m=>{ const d=dayDelta(m.id); return d.has
-    ? (d.v>0?'+':'')+d.v.toFixed(2)+' kg'+(d.label?' <span class="mini">'+esc(d.label)+'</span>':'') : '—'; };
+    ? (d.v>0?'+':'')+(d.v*2).toFixed(1)+' 斤'+(d.label?' <span class="mini">'+esc(d.label)+'</span>':'') : '—'; };
   $('#todayCompare').innerHTML='<thead><tr><th>对比项</th>'+ms.map(m=>
     '<th>'+(m.id===myId?'我 · ':'对方 · ')+esc(m.name)+'</th>').join('')+'</tr></thead><tbody>'+
     '<tr><td>较起始</td>'+ms.map(m=>'<td><b>'+startOf(m)+'</b></td>').join('')+'</tr>'+
@@ -2291,14 +2291,14 @@ function renderWeightCal(){
     const v=idx[ds];
     cells+='<div class="wkg-day'+(v?' has':'')+(ds===today()?' today':'')+'" data-action="wkg-pick" data-date="'+ds+'">'+
       '<span class="d">'+d+'</span>'+
-      (v?'<b>'+v.kg.toFixed(2)+'</b>':'')+
-      (v&&v.delta!==null?'<i class="'+(v.delta>0?'up':'down')+'">'+(v.delta>0?'+':'')+v.delta.toFixed(2)+'</i>':'')+
+      (v?'<b>'+(v.kg*2).toFixed(1)+'</b>':'')+
+      (v&&v.delta!==null?'<i class="'+(v.delta>0?'up':'down')+'">'+(v.delta>0?'+':'')+(v.delta*2).toFixed(1)+'</i>':'')+
     '</div>';
   }
   g.innerHTML=cells;
 
   const box=$('#wkgStats'); if(!box) return;
-  const vals=ws.filter(w=>String(w.date).slice(0,7)===Y+'-'+mm).map(w=>num(w.kg));
+  const vals=ws.filter(w=>String(w.date).slice(0,7)===Y+'-'+mm).map(w=>num(w.kg)*2);
   if(!vals.length){ box.innerHTML='<div style="grid-column:1/-1"><b>—</b><span>本月还没有体重记录</span></div>'; return; }
   const mx=Math.max.apply(null,vals), mn=Math.min.apply(null,vals);
   const chg=vals.length>1?vals[vals.length-1]-vals[0]:null;
@@ -2362,14 +2362,14 @@ function renderTrend(){
     if(tw&&num(tw.kg)>0){
       const d1=kgs.length>=2?num(kgs[kgs.length-1].kg)-num(kgs[kgs.length-2].kg):null;
       const df=base.v>0?last-base.v:0;
-      tEl.innerHTML='<b>'+num(tw.kg).toFixed(2)+'</b><span class="mini">kg · 今日体重'+
+      tEl.innerHTML='<b>'+(num(tw.kg)*2).toFixed(1)+'</b><span class="mini">斤 · 今日体重'+
         (num(tw.waist)>0?' · 腰围 '+num(tw.waist).toFixed(1)+' cm':'')+'</span>'+
         '<span class="mini" style="flex:0 0 100%;margin-top:6px">'+
-        (d1!==null?'较上次 '+(d1>0?'+':'')+d1.toFixed(2)+' kg · ':'')+
-        '较起始 '+(df>0?'+':'')+df.toFixed(2)+' kg'+(base.v>0?' · 基准 '+base.v.toFixed(2):'')+'</span>';
+        (d1!==null?'较上次 '+(d1>0?'+':'')+(d1*2).toFixed(1)+' 斤 · ':'')+
+        '较起始 '+(df>0?'+':'')+(df*2).toFixed(1)+' 斤'+(base.v>0?' · 基准 '+(base.v*2).toFixed(1):'')+'</span>';
     }else{
       tEl.innerHTML='<b style="font-size:17px">今日还没称重</b>'+
-        (last>0?'<span class="mini">最近一次 '+last.toFixed(2)+' kg（'+fmtDate(kgs[kgs.length-1].date)+'）</span>':'');
+        (last>0?'<span class="mini">最近一次 '+(last*2).toFixed(1)+' 斤（'+fmtDate(kgs[kgs.length-1].date)+'）</span>':'');
     }
   }
   const tc=$('#twCount'); if(tc) tc.textContent='共 '+ws.length+' 条';
@@ -2792,7 +2792,7 @@ function renderRecords(){
     ['累计跳操次数',m=>workoutsOf(m.id).length+' 次'],
     ['累计消耗',m=>kcalSum(workoutsOf(m.id))+' kcal'+riceHint(kcalSum(workoutsOf(m.id)))],
     ['连续打卡',m=>streakOf(m.id)+' 天'],
-    ['体重变化',m=>{const d=weightDelta(m.id);return d.has?((d.v>0?'+':'')+d.v.toFixed(2)+' kg'):'—';}],
+    ['体重变化',m=>{const d=weightDelta(m.id);return d.has?((d.v>0?'+':'')+(d.v*2).toFixed(1)+' 斤'):'—';}],
     ['最新腰围',m=>{const v=latestWaist(m.id);return v?v.toFixed(1)+' cm':'—';}],
     ['腰围变化',m=>{const d=waistDelta(m.id);return d.has?((d.v>0?'+':'')+d.v.toFixed(1)+' cm'):'—';}],
     ['目标进度',m=>{
@@ -2809,7 +2809,7 @@ function renderRecords(){
   const mine=x=>x.memberId===myId, feed=[];
   live(state.workouts).filter(mine).forEach(w=>feed.push({ts:w.ts||0,html:'🏃‍♀️ 完成 '+esc(w.type)+' '+num(w.minutes)+' 分钟 · '+num(w.kcal)+' kcal'+riceHint(w.kcal),arr:'workouts',id:w.id,owner:w.memberId}));
   live(state.weights).filter(mine).forEach(w=>{
-    const parts=[]; if(num(w.kg)>0) parts.push(num(w.kg).toFixed(2)+' kg'); if(num(w.waist)>0) parts.push('腰围 '+num(w.waist).toFixed(1)+' cm');
+    const parts=[]; if(num(w.kg)>0) parts.push((num(w.kg)*2).toFixed(1)+' 斤'); if(num(w.waist)>0) parts.push('腰围 '+num(w.waist).toFixed(1)+' cm');
     feed.push({ts:w.ts||0,html:'⚖️ 记录 '+(parts.join(' / ')||'—')+'（'+esc(w.date)+'）',arr:'weights',id:w.id,owner:w.memberId});
   });
   live(state.meals).filter(mine).forEach(w=>feed.push({ts:w.ts||0,html:'🍽️ 记录'+esc(w.slot)+'：'+esc(w.text||'')+' · '+num(w.kcal)+' kcal'+(w.photo?' 📷':''),arr:'meals',id:w.id,owner:w.memberId}));
@@ -2839,8 +2839,8 @@ function renderSettings(){
     '<div class="field"><label>性别（用于基础代谢）</label><select id="pGender"><option value="female"'+(m.gender!=='male'?' selected':'')+'>女</option><option value="male"'+(m.gender==='male'?' selected':'')+'>男</option></select></div></div>'+
     '<div class="form-row r2"><div class="field"><label>身高（cm）</label><input id="pHeight" type="number" min="100" max="230" value="'+esc(m.height)+'" placeholder="165"></div>'+
     '<div class="field"><label>年龄</label><input id="pAge" type="number" min="10" max="100" value="'+esc(m.age)+'" placeholder="28"></div></div>'+
-    '<div class="form-row r2"><div class="field"><label>起始体重（kg）</label><input id="pStart" type="number" min="20" max="300" step="0.01" value="'+esc(m.startWeight)+'" placeholder="60.00"></div>'+
-    '<div class="field"><label>目标体重（kg）</label><input id="pTarget" type="number" min="20" max="300" step="0.01" value="'+esc(m.targetWeight)+'" placeholder="55.00"></div></div>'+
+    '<div class="form-row r2"><div class="field"><label>起始体重（斤）</label><input id="pStart" type="number" min="40" max="600" step="0.1" value="'+esc(m.startWeight?(num(m.startWeight)*2).toFixed(1):'')+'" placeholder="120.0"></div>'+
+    '<div class="field"><label>目标体重（斤）</label><input id="pTarget" type="number" min="40" max="600" step="0.1" value="'+esc(m.targetWeight?(num(m.targetWeight)*2).toFixed(1):'')+'" placeholder="110.0"></div></div>'+
     '<button class="btn btn-primary btn-block" type="submit">保存我的档案</button>'+
     '<p class="mini" style="margin-top:9px">身份已锁定在本机，各人维护各自的档案。当前身份：'+esc(m.name)+'</p>';
    renderSettings._sig=sig; renderSettings._pending=false;
@@ -2888,7 +2888,7 @@ function renderDailyTiles(){
   const mealCount=live(state.meals).filter(x=>x.memberId===myId&&x.date===t).length;
   const tiles=[
     {tab:'diet',ic:'🍽️',n:'饮食',v:num(b.eaten)+' / '+num(b.target)+' kcal',st:mealCount?'已记 '+mealCount+' 餐 · 点击继续':'点击记录三餐',done:mealCount>0},
-    {tab:'trend',ic:'⚖️',n:'体重',v:wd.has?wd.last.toFixed(2)+' kg':'尚无记录',st:(wToday?'今日已记录 ✓':'点击记录今日')+(wTodayWaist>0?' · 腰围 '+wTodayWaist.toFixed(1)+' cm':''),done:!!wToday},
+    {tab:'trend',ic:'⚖️',n:'体重',v:wd.has?(wd.last*2).toFixed(1)+' 斤':'尚无记录',st:(wToday?'今日已记录 ✓':'点击记录今日')+(wTodayWaist>0?' · 腰围 '+wTodayWaist.toFixed(1)+' cm':''),done:!!wToday},
     {tab:'today',ic:'🔥',n:'跳操打卡',v:kcal+' kcal 今日消耗'+(kcal>0?' · '+riceTag(kcal,true):''),st:kcal>0?'今日已完成 ✓':'点击去打卡',done:kcal>0},
     {tab:'water',ic:'💧',n:'喝水',v:waterMl(cups)+' / '+waterGoalMl()+' ml',st:waterMl(cups)>=waterGoalMl()?'今日达标 ♡':'还差 '+Math.max(0,goalCups()-cups)+' 杯',done:waterMl(cups)>=waterGoalMl()}
   ];
@@ -3238,9 +3238,9 @@ function bind(){
     }else if(kind==='hweight'){
       const kgRaw=$('#hwKg')?$('#hwKg').value.trim():'', waRaw=$('#hwWaist')?$('#hwWaist').value.trim():'';
       if(!kgRaw&&!waRaw){ toast('请填写体重或腰围'); return; }
-      const kg=kgRaw===''?0:Math.round(num(kgRaw)*100)/100;
+      const kg=kgRaw===''?0:Math.round(num(kgRaw)/2*100)/100;
       const wa=waRaw===''?0:Math.round(num(waRaw)*10)/10;
-      if(kgRaw&&(kg<20||kg>300)){ toast('请输入 20–300 之间的体重'); return; }
+      if(kgRaw&&(kg<20||kg>300)){ toast('请输入 40–600 之间的体重（斤）'); return; }
       if(waRaw&&(wa<30||wa>200)){ toast('请输入 30–200 之间的腰围'); return; }
       const prev=live(state.weights).find(x=>x.id==='w_'+myId+'_'+t);
       const finalKg=kg>0?kg:(prev?num(prev.kg):0);
@@ -3297,7 +3297,7 @@ function bind(){
     }else if(kind==='member'){
       const m=me();
       commit(()=>{ upsert('members',m.id,{...m,name:$('#pName').value.trim()||m.name,gender:$('#pGender').value,
-        height:$('#pHeight').value,age:$('#pAge').value,startWeight:$('#pStart').value,targetWeight:$('#pTarget').value,ts:now}); });
+        height:$('#pHeight').value,age:$('#pAge').value,startWeight:$('#pStart').value===''?'':String(num($('#pStart').value)/2),targetWeight:$('#pTarget').value===''?'':String(num($('#pTarget').value)/2),ts:now}); });
       toast('档案已保存 · 名字与起始体重会同步给对方');
     }else if(kind==='vision'){
       try{
@@ -3424,7 +3424,7 @@ function bind(){
     }
     else if(a==='wkg-pick'){
       const ds=b.dataset.date, w=live(state.weights).find(x=>x.memberId===myId&&x.date===ds);
-      if(w) toast(fmtDate(ds)+' · '+(num(w.kg)>0?num(w.kg).toFixed(2)+' kg':'仅腰围 '+(num(w.waist)>0?num(w.waist).toFixed(1)+' cm':'')));
+      if(w) toast(fmtDate(ds)+' · '+(num(w.kg)>0?(num(w.kg)*2).toFixed(1)+' 斤':'仅腰围 '+(num(w.waist)>0?num(w.waist).toFixed(1)+' cm':'')));
       else toast(fmtDate(ds)+' 暂无记录 · 在首页「体重」卡录入');
     }
     else if(a==='goto-trend'){
