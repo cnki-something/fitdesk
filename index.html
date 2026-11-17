@@ -539,11 +539,12 @@ a{color:var(--main-d)}
       <div class="mini" id="wcardBase" style="margin-top:5px"></div>
       <div class="wcard-goal"><span id="wcardGoalText">目标未设置</span><i class="wbar"><em id="wcardGoalBar" style="width:0%"></em></i></div>
       <form data-form="hweight" data-no-nav style="margin-top:10px">
-        <div class="form-row r2" style="margin-bottom:8px">
+        <div class="form-row r3" style="margin-bottom:8px">
           <div class="field"><label>体重（斤）</label><input id="hwKg" type="number" min="40" max="600" step="0.1" placeholder="例如 120.5"></div>
-          <div class="field"><label>腰围（cm）</label><input id="hwWaist" type="number" min="30" max="200" step="0.1" placeholder="例如 68.5"></div>
+          <div class="field"><label>大腿围（cm）</label><input id="hwThigh" type="number" min="20" max="150" step="0.1" placeholder="例如 52.3"></div>
+          <div class="field"><label>小腿围（cm）</label><input id="hwCalf" type="number" min="20" max="150" step="0.1" placeholder="例如 34.1"></div>
         </div>
-        <button class="btn btn-primary btn-block" type="submit">记录今日体重 / 腰围</button>
+        <button class="btn btn-primary btn-block" type="submit">记录今日体重 / 围度</button>
       </form>
       <div class="mini" id="wcardWaist" style="margin-top:6px"></div>
     </div>
@@ -718,8 +719,8 @@ a{color:var(--main-d)}
 
     <div class="grid">
       <div class="card">
-        <h3><span class="ic">📈</span>体重 / 腰围趋势</h3>
-        <p class="desc">最近 14 次记录的走势：蓝线是体重（左轴 斤），粉线是腰围（右轴 cm），悬停圆点看当次数值；两者都在首页「体重」卡记录。</p>
+        <h3><span class="ic">📈</span>体重 / 大小腿围趋势</h3>
+        <p class="desc">最近 14 次记录的走势：蓝线是体重（左轴 斤），粉线是大腿围、橙线是小腿围（右轴 cm），按住图表左右滑动可看每天数值；都在首页「体重」卡记录。</p>
         <div class="wt-chart" id="trendChart"></div>
         <div class="divider"></div>
         <div class="tw-today" id="twToday"></div>
@@ -729,8 +730,8 @@ a{color:var(--main-d)}
         </details>
       </div>
       <div class="card">
-        <h3><span class="ic">📐</span>腰围数据</h3>
-        <p class="desc">腰围比体重更直观反映减脂效果；图上每个点是最近一次记录。</p>
+        <h3><span class="ic">📐</span>大小腿围数据</h3>
+        <p class="desc">大小腿围比体重更直观反映减脂效果；建议每周固定测量一次，图上每个点是最近一次记录。</p>
         <div id="waistCard"></div>
       </div>
     </div>
@@ -958,7 +959,7 @@ a{color:var(--main-d)}
 
     <div class="card">
       <h3><span class="ic">🔗</span>双人共享（仅体重与今日消耗）</h3>
-      <p class="desc">开启后，两台设备会自动互相同步「体重 / 腰围」与「跳操消耗」，用于首页的当日体重与今日消耗对照；饮食、喝水、三餐照片、留言和设置仍各自保存在本机，不会上传。</p>
+      <p class="desc">开启后，两台设备会自动互相同步「体重 / 大小腿围」与「跳操消耗」，用于首页的当日体重与今日消耗对照；饮食、喝水、三餐照片、留言和设置仍各自保存在本机，不会上传。</p>
       <div id="roomInfo"></div>
       <div id="roomAlert"></div>
       <div id="shareSetup" style="margin-top:13px">
@@ -988,7 +989,7 @@ a{color:var(--main-d)}
 
     <div class="card">
       <h3><span class="ic">📦</span>本机数据管理</h3>
-      <p class="desc">饮食、饮水、三餐照片、留言与设置只保存在当前浏览器；体重、腰围与跳操消耗会按上方共享设置同步。开启共享前的本机记录会自动带入房间，不会丢失。</p>
+      <p class="desc">饮食、饮水、三餐照片、留言与设置只保存在当前浏览器；体重、大小腿围与跳操消耗会按上方共享设置同步。开启共享前的本机记录会自动带入房间，不会丢失。</p>
       <div class="btn-row" style="margin-top:13px">
         <button class="btn" data-action="export">⬇️ 导出备份 JSON</button>
         <button class="btn" data-action="import">⬆️ 导入备份</button>
@@ -1017,8 +1018,8 @@ a{color:var(--main-d)}
       <div class="desc" style="font-size:12.5px;line-height:1.9">
         1. 页面是单人视角：饮食、喝水、跳操流水、体重趋势、看板都只显示「我」的记录；首页的「当日体重」与「今日消耗」两块同时显示两人数据。<br>
         2. 两人各用各设备时，由一人在「设置 → 双人共享」创建房间并把邀请链接发给对方；对方粘贴加入后，两人自动对应「我 / 对方」两个身份。<br>
-        3. 只有体重 / 腰围与跳操消耗会同步；饮食、喝水、三餐照片、留言与设置始终留在各自设备。身份首次确认后锁定，不能自由切换到对方；选错了可用下方「更正我的身份」。<br>
-        4. 体重精确到小数点后两位，腰围可单独记录；两者建议每天固定时段测量，饮食推荐按日期自动轮换。<br>
+        3. 只有体重 / 大小腿围与跳操消耗会同步；饮食、喝水、三餐照片、留言与设置始终留在各自设备。身份首次确认后锁定，不能自由切换到对方；选错了可用下方「更正我的身份」。<br>
+        4. 体重精确到小数点后两位，大小腿围可单独记录（建议每周测一次）；两者建议每天固定时段测量，饮食推荐按日期自动轮换。<br>
         5. 首页体重卡片下方给出「较起始」「较昨日」两组对比；昨日未称时自动改用最近一次记录并标注日期。<br>
         6. 「饮食 → 三餐照片」可上传照片、点选食物自动估算热量并生成建议；照片压缩后保存在本机，不会上传，也可配置视觉模型接口自动看图识别。<br>
         7. 每杯水容量与每日饮水目标可在「设置 → 目标设置」里修改，默认每杯 500 ml、每日 2000 ml（约 4 杯）。<br>
@@ -1028,7 +1029,7 @@ a{color:var(--main-d)}
         11. 首页「今日热量」的每日摄入额度默认按公式自动估算，点中间圆环可改成自定义固定值或仅当日调整，设置只存本机。<br>
         12. 首页「今日热量」点「📷 拍照识别食物」即可在首页完成拍照、识别食物名称与热量、记入当日摄入；真正的自动识别需在弹窗里配置一次视觉模型接口，零配置时可用食物库点选或把照片发到对话让助手识别后粘贴结果。<br>
         13. 首页「今日热量」下方点「早餐 / 午餐 / 晚餐 / 加餐」格子，可直接输入食物名称与热量连续记录多样，并显示该餐小计；「运动」格子已移除，运动消耗仍在上方数字里查看。<br>
-        14. 首页「体重」卡可同时记录体重与腰围并显示目标进度条；左侧「体重」页展示体重 / 腰围双线趋势图（左轴 kg、右轴 cm）、体重日历与折叠的记录明细。<br>
+        14. 首页「体重」卡可同时记录体重与大小腿围并显示目标进度条；左侧「体重」页展示体重 / 大小腿围趋势图（左轴 斤、右轴 cm）、体重日历与折叠的记录明细。<br>
         15. 全站「较起始」统一以「设置 → 我的档案 → 起始体重」为基准（未填时才回退到第一次称重记录），体重卡、对比表、目标进度条与体重页四处一致，并在数字旁标出基准值；补录更早的称重不会改变这个基准。<br>
         16. 全站运动消耗统一按 1 碗熟米饭 ≈ 200 kcal 并列换算为米饭碗数，方便直观理解；饮食摄入热量不做换算。<br>
         17. 本工具为日常记录与一般性参考，不构成医疗、营养或运动处方建议。
@@ -1047,7 +1048,7 @@ a{color:var(--main-d)}
 <script>
 /* =========================================================
    一起变轻盈 · 减脂工作台（单人视角 + 轻量共享版）
-   纯前端单文件应用；体重 / 腰围 / 跳操消耗经 GitHub Gist 在两人间同步，
+   纯前端单文件应用；体重 / 大小腿围 / 跳操消耗经 GitHub Gist 在两人间同步，
    饮食、喝水、三餐照片、留言与设置仅保存在各自浏览器
    ========================================================= */
 'use strict';
@@ -1248,7 +1249,7 @@ function shareSnapshot(){
     o[k]=(state[k]||[]).filter(x=>x&&x.id).map(x=>{
       if(k==='members') return {id:x.id,name:x.name,color:x.color,
         startWeight:x.startWeight,targetWeight:x.targetWeight,ts:x.ts||0,deleted:!!x.deleted};
-      return {id:x.id,memberId:x.memberId,date:x.date,kg:x.kg,waist:x.waist,
+      return {id:x.id,memberId:x.memberId,date:x.date,kg:x.kg,waist:x.waist,thigh:x.thigh,calf:x.calf,
         kcal:x.kcal,type:x.type,minutes:x.minutes,level:x.level,manual:x.manual,
         note:x.note,ts:x.ts||0,deleted:!!x.deleted};
     });
@@ -1408,19 +1409,23 @@ function weightDelta(mid){
   if(!ws.length||!base.v) return {v:0,has:false};
   return {v:num(ws[ws.length-1].kg)-base.v,has:true,last:num(ws[ws.length-1].kg),base:base.v,src:base.src};
 }
-/* ---- 腰围与当日体重（本机数据） ---- */
+/* ---- 大小腿围与当日体重（随体重记录共享） ---- */
 function todayWeightOf(mid){
   const t=today();
   return live(state.weights).find(w=>w.memberId===mid&&w.date===t)||null;
 }
-function latestWaist(mid){
-  const ws=sortDate(live(state.weights).filter(w=>w.memberId===mid&&num(w.waist)>0));
-  return ws.length?num(ws[ws.length-1].waist):0;
+function circSeriesOf(mid,key){
+  return sortDate(live(state.weights).filter(w=>w.memberId===mid&&num(w[key])>0));
 }
-function waistDelta(mid){
-  const ws=sortDate(live(state.weights).filter(w=>w.memberId===mid&&num(w.waist)>0));
-  if(ws.length<2) return {v:0,has:false,last:ws.length?num(ws[ws.length-1].waist):0};
-  return {v:num(ws[ws.length-1].waist)-num(ws[0].waist),has:true,last:num(ws[ws.length-1].waist)};
+function circSeries(key){ return circSeriesOf(myId,key); }
+function latestCirc(mid,key){
+  const ws=circSeriesOf(mid,key);
+  return ws.length?num(ws[ws.length-1][key]):0;
+}
+function circDelta(mid,key){
+  const ws=circSeriesOf(mid,key);
+  if(ws.length<2) return {v:0,has:false,last:ws.length?num(ws[ws.length-1][key]):0};
+  return {v:num(ws[ws.length-1][key])-num(ws[0][key]),has:true,last:num(ws[ws.length-1][key])};
 }
 /* 共享横幅：随连接状态切换文案 */
 function renderShareBanner(){
@@ -1474,9 +1479,9 @@ function renderMealQuickList(){
 }
 function renderTrendChart(){
   const box=$('#trendChart'); if(!box) return;
-  const all=sortDate(live(state.weights).filter(w=>w.memberId===myId&&(num(w.kg)>0||num(w.waist)>0))).slice(-14);
-  if(all.length<2){ box.innerHTML='<div class="wt-empty">再记录一次体重或腰围，就能看到趋势曲线啦 📈</div>'; return; }
-  const kp=all.filter(w=>num(w.kg)>0), wp=all.filter(w=>num(w.waist)>0);
+  const all=sortDate(live(state.weights).filter(w=>w.memberId===myId&&(num(w.kg)>0||num(w.thigh)>0||num(w.calf)>0))).slice(-14);
+  if(all.length<2){ box.innerHTML='<div class="wt-empty">再记录一次体重或大小腿围，就能看到趋势曲线啦 📈</div>'; return; }
+  const kp=all.filter(w=>num(w.kg)>0), tp=all.filter(w=>num(w.thigh)>0), cp=all.filter(w=>num(w.calf)>0);
   const mkRange=(pts,unit)=>{
     if(!pts.length) return {lo:0,hi:1,has:false};
     let lo=Math.min.apply(null,pts), hi=Math.max.apply(null,pts);
@@ -1484,7 +1489,8 @@ function renderTrendChart(){
     return {lo:lo-pad,hi:hi+pad,has:true};
   };
   const kr=mkRange(kp.map(w=>num(w.kg)*2),'jin');
-  const wr=mkRange(wp.map(w=>num(w.waist)),'cm');
+  const cmPts=tp.map(w=>num(w.thigh)).concat(cp.map(w=>num(w.calf)));
+  const wr=mkRange(cmPts,'cm');
   /* 画布宽度跟随容器，避免 560 宽 viewBox 被压扁导致刻度文字变形 */
   const cw=Math.round(box.clientWidth||0);
   const W=clamp(cw>60?cw-20:560,240,900);
@@ -1515,26 +1521,30 @@ function renderTrendChart(){
     return {path:path,dots:dots,count:count};
   };
   const ks=kr.has?series('kg',kr,'#8ea0ff',1,'斤',2):{path:'',dots:'',count:0};
-  const ws=wr.has?series('waist',wr,'#c95f88',1,'cm'):{path:'',dots:'',count:0};
+  const thS=wr.has?series('thigh',wr,'#c95f88',1,'cm'):{path:'',dots:'',count:0};
+  const cfS=wr.has?series('calf',wr,'#e8a13c',1,'cm'):{path:'',dots:'',count:0};
   let dates='';
   all.forEach((w,i)=>{ if(i===0||i===all.length-1)
     dates+='<text x="'+X(i).toFixed(1)+'" y="'+(H-6)+'" text-anchor="'+(i===0?'start':'end')+'" font-size="'+fs+'" fill="#8b93c0">'+fmtDate(w.date)+'</text>'; });
   const legend='<div class="wt-legend">'+
     (kr.has?'<span><i style="background:#8ea0ff"></i>体重 斤（左轴）</span>':'')+
-    (wr.has?'<span><i style="background:#c95f88"></i>腰围 cm（右轴）</span>':'')+
-    (ws.count===1?'<span>再记一次腰围就能连成线</span>':'')+
+    (wr.has?'<span><i style="background:#c95f88"></i>大腿围 cm（右轴）</span>':'')+
+    (wr.has?'<span><i style="background:#e8a13c"></i>小腿围 cm（右轴）</span>':'')+
+    (thS.count===1||cfS.count===1?'<span>再记一次围度就能连成线</span>':'')+
     '<span style="color:#a98d9c">按住图表左右滑动可看每天数据</span>'+
     '</div>';
-  const lastK=kp.length?num(kp[kp.length-1].kg):0, lastW=wp.length?num(wp[wp.length-1].waist):0;
+  const lastK=kp.length?num(kp[kp.length-1].kg):0, lastT=tp.length?num(tp[tp.length-1].thigh):0, lastC=cp.length?num(cp[cp.length-1].calf):0;
   box.innerHTML='<div class="wt-wrap" style="position:relative"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="touch-action:pan-y">'+grid+
     (ks.path?'<path d="'+ks.path+'" fill="none" stroke="#8ea0ff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>':'')+
-    (ws.path?'<path d="'+ws.path+'" fill="none" stroke="#c95f88" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>':'')+
-    ks.dots+ws.dots+dates+
+    (thS.path?'<path d="'+thS.path+'" fill="none" stroke="#c95f88" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>':'')+
+    (cfS.path?'<path d="'+cfS.path+'" fill="none" stroke="#e8a13c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>':'')+
+    ks.dots+thS.dots+cfS.dots+dates+
     '<line id="wtCursor" x1="0" y1="'+T+'" x2="0" y2="'+(H-B)+'" stroke="#c95f88" stroke-width="1.2" stroke-dasharray="3 3" visibility="hidden"/>'+
     '</svg><div id="wtTip" style="display:none;position:absolute;top:2px;transform:translateX(-50%);background:#fff;border:1px solid #f0c9d8;border-radius:10px;padding:5px 10px;font-size:12px;color:#5c4356;box-shadow:0 4px 14px rgba(0,0,0,.12);white-space:nowrap;pointer-events:none;z-index:5"></div></div>'+legend+
     '<div class="wt-lb"><span>'+fmtDate(all[0].date)+' 起 · 共 '+all.length+' 次</span>'+
-    '<span>'+(lastK>0?'最新 '+(lastK*2).toFixed(1)+' 斤':'')+(lastK>0&&lastW>0?' · ':'')+(lastW>0?'腰围 '+lastW.toFixed(1)+' cm':'')+'</span></div>';
-  /* 点击 / 按住左右滑动：显示对应日期的体重与腰围读数 */
+    '<span>'+(lastK>0?'最新 '+(lastK*2).toFixed(1)+' 斤':'')+(lastK>0&&(lastT>0||lastC>0)?' · ':'')+
+    (lastT>0?'大腿 '+lastT.toFixed(1)+' cm':'')+(lastT>0&&lastC>0?' / ':'')+(lastC>0?'小腿 '+lastC.toFixed(1)+' cm':'')+'</span></div>';
+  /* 点击 / 按住左右滑动：显示对应日期的体重与大小腿围读数 */
   const wrapEl=box.querySelector('.wt-wrap'), svgEl=wrapEl.querySelector('svg'),
         cursor=box.querySelector('#wtCursor'), tipEl=box.querySelector('#wtTip');
   const hideTip=()=>{ tipEl.style.display='none'; cursor.setAttribute('visibility','hidden'); };
@@ -1545,8 +1555,8 @@ function renderTrendChart(){
     all.forEach((w,i)=>{ const d=Math.abs(X(i)-vx); if(d<bd){bd=d;best=i;} });
     const th=Math.max(20,(W-L-R)/Math.max(1,all.length-1)/1.5);
     if(best<0||bd>th){ hideTip(); return; }
-    const w=all[best], kgv=num(w.kg), wav=num(w.waist);
-    tipEl.innerHTML='<b>'+fmtDate(w.date)+'</b>　体重 '+(kgv>0?(kgv*2).toFixed(1)+' 斤':'—')+' · 腰围 '+(wav>0?wav.toFixed(1)+' cm':'—');
+    const w=all[best], kgv=num(w.kg), tvv=num(w.thigh), cvv=num(w.calf);
+    tipEl.innerHTML='<b>'+fmtDate(w.date)+'</b>　体重 '+(kgv>0?(kgv*2).toFixed(1)+' 斤':'—')+' · 大腿 '+(tvv>0?tvv.toFixed(1)+' cm':'—')+' · 小腿 '+(cvv>0?cvv.toFixed(1)+' cm':'—');
     tipEl.style.display='block';
     tipEl.style.left=clamp((X(best)/W)*rect.width,70,rect.width-70)+'px';
     cursor.setAttribute('x1',X(best).toFixed(1));
@@ -1717,15 +1727,16 @@ function renderHomeCards(){
   }
   const ww=$('#wcardWaist');
   if(ww){
-    const twW=live(state.weights).find(w=>w.memberId===myId&&w.date===today()&&num(w.waist)>0);
-    const wa=twW?num(twW.waist):latestWaist(myId);
-    const wser=waistSeries(), firstW=wser.length?num(wser[0].waist):0;
-    const dW=(wa>0&&wser.length>1&&firstW>0)?wa-firstW:null;
-    ww.innerHTML=wa>0
-      ? ('腰围 '+(twW?'今日 ':'最近 ')+wa.toFixed(1)+' cm'+
-         (dW!==null?' · 较首次 <b style="color:'+(dW>0?'#d9534f':'#4a9d7f')+'">'+(dW>0?'+':'')+dW.toFixed(1)+' cm</b>':'')+
+    const twW=live(state.weights).find(w=>w.memberId===myId&&w.date===today()&&(num(w.thigh)>0||num(w.calf)>0));
+    const th=twW&&num(twW.thigh)>0?num(twW.thigh):latestCirc(myId,'thigh');
+    const cf=twW&&num(twW.calf)>0?num(twW.calf):latestCirc(myId,'calf');
+    const tser=circSeries('thigh'), firstT=tser.length?num(tser[0].thigh):0;
+    const dT=(th>0&&tser.length>1&&firstT>0)?th-firstT:null;
+    ww.innerHTML=(th>0||cf>0)
+      ? ((th>0?'大腿 '+th.toFixed(1):'大腿 —')+' · '+(cf>0?'小腿 '+cf.toFixed(1):'小腿 —')+' cm（'+(twW?'今日':'最近')+'）'+
+         (dT!==null?' · 较首次 <b style="color:'+(dT>0?'#d9534f':'#4a9d7f')+'">'+(dT>0?'+':'')+dT.toFixed(1)+' cm</b>':'')+
          ' · <span data-action="goto-trend" style="cursor:pointer;color:var(--main-d);font-weight:650">看趋势 ›</span>')
-      : '还没记录腰围，在下方填一次吧';
+      : '还没记录大小腿围，在下方填一次吧';
   }
 }
 function renderTodayWeights(){
@@ -2311,22 +2322,26 @@ function renderWeightCal(){
     {v:avg.toFixed(2),l:'平均'}
   ].map(x=>'<div><b'+(x.c?' style="color:'+x.c+'"':'')+'>'+x.v+'</b><span>'+x.l+'</span></div>').join('');
 }
-/* ---- 腰围序列（首页摘要与双线趋势图共用） ---- */
-function waistSeries(){
-  return sortDate(live(state.weights).filter(w=>w.memberId===myId&&num(w.waist)>0));
-}
+/* ---- 大小腿围数据卡（跳操页） ---- */
 function renderWaistCard(){
   const el=$('#waistCard'); if(!el) return;
-  const ser=waistSeries();
-  if(!ser.length){
-    el.innerHTML='<div class="note">还没有腰围记录。在首页体重卡里填一次，或在「体重」页补录。</div>'+
-      '<div class="btn-row" style="margin-top:10px"><button class="btn btn-warm btn-block" data-tab="home">去记录腰围</button></div>';
+  const ser=circSeries('thigh'), serC=circSeries('calf');
+  if(!ser.length&&!serC.length){
+    el.innerHTML='<div class="note">还没有大小腿围记录。建议每周固定一天测量，在首页体重卡里填一次。</div>'+
+      '<div class="btn-row" style="margin-top:10px"><button class="btn btn-warm btn-block" data-tab="home">去记录围度</button></div>';
     return;
   }
-  const last=ser[ser.length-1], firstW=num(ser[0].waist), wa=num(last.waist);
-  const dW=(ser.length>1&&firstW>0)?wa-firstW:null;
-  const pts=ser.slice(-8), vals=pts.map(x=>num(x.waist));
-  const mn=Math.min(...vals), mx=Math.max(...vals), span=Math.max(0.5,mx-mn);
+  const rows=[];
+  [['大腿围','thigh',ser],['小腿围','calf',serC]].forEach(it=>{
+    const label=it[0], key=it[1], S=it[2];
+    if(!S.length){ rows.push('<div class="stat-line"><span>最近'+label+'</span><b>—</b></div>'); return; }
+    const last=S[S.length-1], firstV=num(S[0][key]), va=num(last[key]);
+    const dV=(S.length>1&&firstV>0)?va-firstV:null;
+    rows.push('<div class="stat-line"><span>最近'+label+'（'+fmtDate(last.date)+'）'+(dV!==null?' · 较首次 '+((dV>0?'+':'')+dV.toFixed(1)+' cm'):'')+'</span><b>'+va.toFixed(1)+' cm</b></div>');
+  });
+  const hasTh=ser.length>0, key=hasTh?'thigh':'calf', S=hasTh?ser:serC, color=hasTh?'#c95f88':'#e8a13c';
+  const pts=S.slice(-8), vals=pts.map(x=>num(x[key]));
+  const mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), span=Math.max(0.5,mx-mn);
   const W=680,H=150,P={l:46,r:14,t:16,b:24};
   const iw=W-P.l-P.r, ih=H-P.t-P.b;
   const px=i=>(pts.length===1?P.l+iw/2:P.l+i*iw/(pts.length-1));
@@ -2334,21 +2349,18 @@ function renderWaistCard(){
   let svg='<line x1="'+P.l+'" y1="'+(H-P.b)+'" x2="'+(W-P.r)+'" y2="'+(H-P.b)+'" stroke="#f7e7ed"/>';
   if(pts.length>1){
     const pl=pts.map((x,i)=>(i?' ':'')+px(i).toFixed(1)+','+py(vals[i]).toFixed(1)).join('');
-    svg+='<polyline fill="none" stroke="#c95f88" stroke-width="2.5" points="'+pl+'"/>';
+    svg+='<polyline fill="none" stroke="'+color+'" stroke-width="2.5" points="'+pl+'"/>';
   }
   pts.forEach((x,i)=>{
-    svg+='<circle cx="'+px(i).toFixed(1)+'" cy="'+py(vals[i]).toFixed(1)+'" r="3.5" fill="'+(me().color||COLORS[0])+'"><title>'+x.date+' 腰围 '+num(x.waist).toFixed(1)+' cm</title></circle>';
+    svg+='<circle cx="'+px(i).toFixed(1)+'" cy="'+py(vals[i]).toFixed(1)+'" r="3.5" fill="'+color+'"><title>'+fmtDate(x.date)+' '+(hasTh?'大腿围':'小腿围')+' '+num(x[key]).toFixed(1)+' cm</title></circle>';
   });
   svg+='<text x="'+px(0).toFixed(1)+'" y="'+(py(vals[0])-8).toFixed(1)+'" font-size="11" fill="#a95274">'+vals[0].toFixed(1)+'</text>';
   if(pts.length>1) svg+='<text x="'+px(pts.length-1).toFixed(1)+'" y="'+(py(vals[pts.length-1])-8).toFixed(1)+'" text-anchor="end" font-size="11" fill="#a95274">'+vals[vals.length-1].toFixed(1)+'</text>';
   svg+='<text x="'+P.l+'" y="'+(H-7)+'" font-size="11" fill="#a98d9c">'+fmtDate(pts[0].date)+'</text>';
   if(pts.length>1) svg+='<text x="'+(W-P.r)+'" y="'+(H-7)+'" font-size="11" fill="#a98d9c" text-anchor="end">'+fmtDate(pts[pts.length-1].date)+'</text>';
-  const up=dW!==null&&dW>0;
   el.innerHTML='<svg class="chart" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+svg+'</svg>'+
-    '<div class="divider"></div>'+
-    '<div class="stat-line"><span>最近腰围（'+fmtDate(last.date)+'）</span><b>'+wa.toFixed(1)+' cm</b></div>'+
-    '<div class="stat-line"><span>较首次'+(firstW>0?'（'+firstW.toFixed(1)+' cm）':'')+'</span><b>'+(dW===null?'—':((up?'+':'')+dW.toFixed(1)+' cm'))+'</b></div>'+
-    '<div class="btn-row" style="margin-top:10px"><button class="btn btn-warm btn-block" data-tab="home">去记录腰围</button></div>';
+    '<div class="divider"></div>'+rows.join('')+
+    '<div class="btn-row" style="margin-top:10px"><button class="btn btn-warm btn-block" data-tab="home">去记录围度</button></div>';
 }
 function renderTrend(){
   renderWeightCal();
@@ -2363,7 +2375,7 @@ function renderTrend(){
       const d1=kgs.length>=2?num(kgs[kgs.length-1].kg)-num(kgs[kgs.length-2].kg):null;
       const df=base.v>0?last-base.v:0;
       tEl.innerHTML='<b>'+(num(tw.kg)*2).toFixed(1)+'</b><span class="mini">斤 · 今日体重'+
-        (num(tw.waist)>0?' · 腰围 '+num(tw.waist).toFixed(1)+' cm':'')+'</span>'+
+        ((num(tw.thigh)>0||num(tw.calf)>0)?' · 大腿 '+(num(tw.thigh)>0?num(tw.thigh).toFixed(1):'—')+' / 小腿 '+(num(tw.calf)>0?num(tw.calf).toFixed(1):'—')+' cm':'')+'</span>'+
         '<span class="mini" style="flex:0 0 100%;margin-top:6px">'+
         (d1!==null?'较上次 '+(d1>0?'+':'')+(d1*2).toFixed(1)+' 斤 · ':'')+
         '较起始 '+(df>0?'+':'')+(df*2).toFixed(1)+' 斤'+(base.v>0?' · 基准 '+(base.v*2).toFixed(1):'')+'</span>';
@@ -2376,9 +2388,9 @@ function renderTrend(){
   const wl=sortTs(ws).slice(0,20);
   const listEl=$('#weightList');
   if(listEl) listEl.innerHTML=wl.length?wl.map(w=>{
-    const kg=num(w.kg), wa=num(w.waist);
-    return '<div class="item">'+avatarHTML(me(),26)+'<div class="body"><div class="t1">'+esc(w.date)+'</div><div class="t2">'+esc(me().name)+(wa>0?' · 腰围 '+wa.toFixed(1)+' cm':'')+'</div></div><div class="num">'+(kg>0?kg.toFixed(2)+' <span class="mini">kg</span>':'<span class="mini">仅腰围</span>')+'</div>'+delBtn('weights',w.id,w.memberId)+'</div>';
-  }).join(''):emptyHTML('📏','暂无体重 / 腰围记录');
+    const kg=num(w.kg), tv=num(w.thigh), cv=num(w.calf);
+    return '<div class="item">'+avatarHTML(me(),26)+'<div class="body"><div class="t1">'+esc(w.date)+'</div><div class="t2">'+esc(me().name)+(tv>0?' · 大腿 '+tv.toFixed(1)+' cm':'')+(cv>0?' · 小腿 '+cv.toFixed(1)+' cm':'')+'</div></div><div class="num">'+(kg>0?kg.toFixed(2)+' <span class="mini">kg</span>':'<span class="mini">仅围度</span>')+'</div>'+delBtn('weights',w.id,w.memberId)+'</div>';
+  }).join(''):emptyHTML('📏','暂无体重 / 围度记录');
 
   renderWaistCard();
 }
@@ -2793,8 +2805,8 @@ function renderRecords(){
     ['累计消耗',m=>kcalSum(workoutsOf(m.id))+' kcal'+riceHint(kcalSum(workoutsOf(m.id)))],
     ['连续打卡',m=>streakOf(m.id)+' 天'],
     ['体重变化',m=>{const d=weightDelta(m.id);return d.has?((d.v>0?'+':'')+(d.v*2).toFixed(1)+' 斤'):'—';}],
-    ['最新腰围',m=>{const v=latestWaist(m.id);return v?v.toFixed(1)+' cm':'—';}],
-    ['腰围变化',m=>{const d=waistDelta(m.id);return d.has?((d.v>0?'+':'')+d.v.toFixed(1)+' cm'):'—';}],
+    ['最新大腿围',m=>{const v=latestCirc(m.id,'thigh');return v?v.toFixed(1)+' cm':'—';}],
+    ['最新小腿围',m=>{const v=latestCirc(m.id,'calf');return v?v.toFixed(1)+' cm':'—';}],
     ['目标进度',m=>{
       const t=num(m.targetWeight),s=num(m.startWeight),c=latestWeight(m.id);
       if(!t||!s||s<=t) return '—';
@@ -2809,7 +2821,7 @@ function renderRecords(){
   const mine=x=>x.memberId===myId, feed=[];
   live(state.workouts).filter(mine).forEach(w=>feed.push({ts:w.ts||0,html:'🏃‍♀️ 完成 '+esc(w.type)+' '+num(w.minutes)+' 分钟 · '+num(w.kcal)+' kcal'+riceHint(w.kcal),arr:'workouts',id:w.id,owner:w.memberId}));
   live(state.weights).filter(mine).forEach(w=>{
-    const parts=[]; if(num(w.kg)>0) parts.push((num(w.kg)*2).toFixed(1)+' 斤'); if(num(w.waist)>0) parts.push('腰围 '+num(w.waist).toFixed(1)+' cm');
+    const parts=[]; if(num(w.kg)>0) parts.push((num(w.kg)*2).toFixed(1)+' 斤'); if(num(w.thigh)>0) parts.push('大腿 '+num(w.thigh).toFixed(1)+' cm'); if(num(w.calf)>0) parts.push('小腿 '+num(w.calf).toFixed(1)+' cm');
     feed.push({ts:w.ts||0,html:'⚖️ 记录 '+(parts.join(' / ')||'—')+'（'+esc(w.date)+'）',arr:'weights',id:w.id,owner:w.memberId});
   });
   live(state.meals).filter(mine).forEach(w=>feed.push({ts:w.ts||0,html:'🍽️ 记录'+esc(w.slot)+'：'+esc(w.text||'')+' · '+num(w.kcal)+' kcal'+(w.photo?' 📷':''),arr:'meals',id:w.id,owner:w.memberId}));
@@ -2855,7 +2867,7 @@ function renderSettings(){
   $('#shareActive').classList.toggle('hidden',!shared);
   renderShareStatus();
   $('#roomAlert').innerHTML = shared
-    ? '<div class="note warn" style="margin-top:10px">仅「体重 / 腰围」与「跳操消耗」会同步；饮食、喝水、照片、留言、设置不会上传。邀请链接含访问凭证，只发给同伴本人。</div>'
+    ? '<div class="note warn" style="margin-top:10px">仅「体重 / 大小腿围」与「跳操消耗」会同步；饮食、喝水、照片、留言、设置不会上传。邀请链接含访问凭证，只发给同伴本人。</div>'
     : '<div class="note warn" style="margin-top:10px">由其中一人创建房间并复制邀请链接，另一人粘贴加入；加入后两人分别对应「我 / 对方」。未开启时功能完整，只是看不到对方数据。</div>';
 }
 
@@ -2881,14 +2893,14 @@ function renderDailyTiles(){
   const t=today();
   const b=budget(myId), wd=weightDelta(myId);
   const wToday=live(state.weights).find(x=>x.memberId===myId&&x.date===t);
-  const wTodayWaist=wToday?num(wToday.waist):0;
+  const wTodayCirc=wToday&&(num(wToday.thigh)>0||num(wToday.calf)>0);
   const kcal=kcalSum(workoutsOf(myId,t));
   const ck=live(state.checkins).find(c=>c.memberId===myId&&c.date===t);
   const cups=clamp(num(ck&&ck.water),0,30);
   const mealCount=live(state.meals).filter(x=>x.memberId===myId&&x.date===t).length;
   const tiles=[
     {tab:'diet',ic:'🍽️',n:'饮食',v:num(b.eaten)+' / '+num(b.target)+' kcal',st:mealCount?'已记 '+mealCount+' 餐 · 点击继续':'点击记录三餐',done:mealCount>0},
-    {tab:'trend',ic:'⚖️',n:'体重',v:wd.has?(wd.last*2).toFixed(1)+' 斤':'尚无记录',st:(wToday?'今日已记录 ✓':'点击记录今日')+(wTodayWaist>0?' · 腰围 '+wTodayWaist.toFixed(1)+' cm':''),done:!!wToday},
+    {tab:'trend',ic:'⚖️',n:'体重',v:wd.has?(wd.last*2).toFixed(1)+' 斤':'尚无记录',st:(wToday?'今日已记录 ✓':'点击记录今日')+(wTodayCirc?' · 已记大小腿围':''),done:!!wToday},
     {tab:'today',ic:'🔥',n:'跳操打卡',v:kcal+' kcal 今日消耗'+(kcal>0?' · '+riceTag(kcal,true):''),st:kcal>0?'今日已完成 ✓':'点击去打卡',done:kcal>0},
     {tab:'water',ic:'💧',n:'喝水',v:waterMl(cups)+' / '+waterGoalMl()+' ml',st:waterMl(cups)>=waterGoalMl()?'今日达标 ♡':'还差 '+Math.max(0,goalCups()-cups)+' 杯',done:waterMl(cups)>=waterGoalMl()}
   ];
@@ -3236,20 +3248,24 @@ function bind(){
       if($('#wType')) $('#wType').value=type;
       toast((wdate===t?'打卡成功':'已补录 '+fmtDate(wdate))+' · '+kcal+' kcal'+riceHint(kcal)+(isNew?' · 已存入课程库':'')+syncTag());
     }else if(kind==='hweight'){
-      const kgRaw=$('#hwKg')?$('#hwKg').value.trim():'', waRaw=$('#hwWaist')?$('#hwWaist').value.trim():'';
-      if(!kgRaw&&!waRaw){ toast('请填写体重或腰围'); return; }
+      const kgRaw=$('#hwKg')?$('#hwKg').value.trim():'', thRaw=$('#hwThigh')?$('#hwThigh').value.trim():'', cfRaw=$('#hwCalf')?$('#hwCalf').value.trim():'';
+      if(!kgRaw&&!thRaw&&!cfRaw){ toast('请填写体重或大小腿围'); return; }
       const kg=kgRaw===''?0:Math.round(num(kgRaw)/2*100)/100;
-      const wa=waRaw===''?0:Math.round(num(waRaw)*10)/10;
+      const th=thRaw===''?0:Math.round(num(thRaw)*10)/10;
+      const cf=cfRaw===''?0:Math.round(num(cfRaw)*10)/10;
       if(kgRaw&&(kg<20||kg>300)){ toast('请输入 40–600 之间的体重（斤）'); return; }
-      if(waRaw&&(wa<30||wa>200)){ toast('请输入 30–200 之间的腰围'); return; }
+      if(thRaw&&(th<20||th>150)){ toast('请输入 20–150 之间的大腿围'); return; }
+      if(cfRaw&&(cf<20||cf>150)){ toast('请输入 20–150 之间的小腿围'); return; }
       const prev=live(state.weights).find(x=>x.id==='w_'+myId+'_'+t);
       const finalKg=kg>0?kg:(prev?num(prev.kg):0);
-      const finalWaist=wa>0?wa:(prev?num(prev.waist):0);
+      const finalTh=th>0?th:(prev?num(prev.thigh):0);
+      const finalCf=cf>0?cf:(prev?num(prev.calf):0);
       commit(()=>{ upsert('weights','w_'+myId+'_'+t,{id:'w_'+myId+'_'+t,memberId:myId,date:t,
-        kg:finalKg,waist:finalWaist,ts:now}); });
+        kg:finalKg,waist:prev?num(prev.waist):0,thigh:finalTh,calf:finalCf,ts:now}); });
       if($('#hwKg')) $('#hwKg').value='';
-      if($('#hwWaist')) $('#hwWaist').value='';
-      toast((finalKg>0&&finalWaist>0?'体重与腰围':(finalKg>0?'体重':'腰围'))+'已记录'+syncTag());
+      if($('#hwThigh')) $('#hwThigh').value='';
+      if($('#hwCalf')) $('#hwCalf').value='';
+      toast((finalKg>0&&(finalTh>0||finalCf>0)?'体重与围度':(finalKg>0?'体重':'围度'))+'已记录'+syncTag());
     }else if(kind==='hworkout'){
       const type=$('#hwType')?$('#hwType').value.trim():'';
       if(!type){ toast('请输入课程名'); return; }
@@ -3424,7 +3440,8 @@ function bind(){
     }
     else if(a==='wkg-pick'){
       const ds=b.dataset.date, w=live(state.weights).find(x=>x.memberId===myId&&x.date===ds);
-      if(w) toast(fmtDate(ds)+' · '+(num(w.kg)>0?(num(w.kg)*2).toFixed(1)+' 斤':'仅腰围 '+(num(w.waist)>0?num(w.waist).toFixed(1)+' cm':'')));
+      if(w){ const pp=[]; if(num(w.thigh)>0) pp.push('大腿 '+num(w.thigh).toFixed(1)); if(num(w.calf)>0) pp.push('小腿 '+num(w.calf).toFixed(1));
+        toast(fmtDate(ds)+' · '+(num(w.kg)>0?(num(w.kg)*2).toFixed(1)+' 斤':'')+(num(w.kg)>0&&pp.length?' · ':'')+(pp.length?pp.join(' / ')+' cm':'暂无数值')); }
       else toast(fmtDate(ds)+' 暂无记录 · 在首页「体重」卡录入');
     }
     else if(a==='goto-trend'){
