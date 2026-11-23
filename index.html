@@ -286,6 +286,7 @@ a{color:var(--main-d)}
 .pcal-day.rest{background:#fdeae0;color:#c47b56;font-weight:700}
 .pcal-day.period.rest{background:#fdeae0;color:#a95f3d;box-shadow:0 0 0 2px #e58aa8 inset;font-weight:750}
 .pcal-day.today{outline:2px solid #c95f88;outline-offset:1px}
+.pcal-ph{font-style:normal;font-size:8.5px;line-height:1;margin-top:1px;font-weight:700;letter-spacing:.5px}
 .pcal-day.w1{background:#fbe4eb;color:#a95274;font-weight:650}
 .pcal-day.w2{background:#f0a8c3;color:#fff;font-weight:700}
 .pcal-day.w3{background:#c95f88;color:#fff;font-weight:750}
@@ -873,6 +874,19 @@ a{color:var(--main-d)}
         <span><i class="sw" style="background:#fdeae0;box-shadow:0 0 0 1px #e58aa8 inset"></i>经期第 1–3 天 · 休息</span>
         <span><i class="sw" style="background:#fff;box-shadow:0 0 0 2px #c95f88 inset"></i>今天</span>
       </div>
+      <div class="legend" style="justify-content:center;gap:14px;margin-top:8px;max-width:520px;margin-left:auto;margin-right:auto">
+        <span><i class="sw" style="background:#d16a92"></i>经期</span>
+        <span><i class="sw" style="background:#4a9d7f"></i>卵泡期</span>
+        <span><i class="sw" style="background:#5b8dd9"></i>排卵期</span>
+        <span><i class="sw" style="background:#c9821f"></i>黄体期</span>
+      </div>
+      <div class="note" style="margin-top:12px;line-height:1.85;font-size:12.5px">
+        <b>各时期体重规律</b>（按你的周期长度估算，因人而异，仅供参考）：<br>
+        🩸 <b>经期</b>（第 1–5 天）：水肿消退，体重处于低位、掉得快但容易波动；别因为掉秤就加量，多休息。<br>
+        🌱 <b>卵泡期</b>（经期结束到排卵前）：减脂黄金期，代谢和胰岛素敏感度较好，体重下降最快，适合安排强度高一点的训练。<br>
+        🥚 <b>排卵期</b>（排卵日前后约 3 天，约第 14 天前后）：体重低位平稳、体能接近巅峰，注意补水。<br>
+        🌙 <b>黄体期</b>（排卵后到下次经期前）：容易水肿、食欲变大，体重常上涨 1–2 斤，经前最明显——是水分不是脂肪，经期开始后会自然回落，不用焦虑。
+      </div>
     </div>
 
     <div class="grid">
@@ -1026,7 +1040,7 @@ a{color:var(--main-d)}
         5. 首页体重卡片下方给出「较起始」「较昨日」两组对比；昨日未称时自动改用最近一次记录并标注日期。<br>
         6. 「饮食 → 三餐照片」可上传照片、点选食物自动估算热量并生成建议；照片压缩后保存在本机，不会上传，也可配置视觉模型接口自动看图识别。<br>
         7. 每杯水容量与每日饮水目标可在「设置 → 目标设置」里修改，默认每杯 500 ml、每日 2000 ml（约 4 杯）。<br>
-        8. 左侧「经期」可记录最近一次月经开始日与周期长度；「经期前三天」按你的定义指经期开始第一天往后数的 3 天（经期第 1–3 天），这 3 天会自动标为休息窗口，跳操打卡会提示按约定休息。经期记录只保存在本机，不会同步给对方。<br>
+        8. 左侧「经期」可记录最近一次月经开始日与周期长度；「经期前三天」按你的定义指经期开始第一天往后数的 3 天（经期第 1–3 天），这 3 天会自动标为休息窗口，跳操打卡会提示按约定休息。经期记录只保存在本机，不会同步给对方；经期日历会按周期标注「经期 / 卵泡期 / 排卵期 / 黄体期」，并在日历下方备注各时期的体重规律（估算值，仅供参考）。<br>
         9. 跳操打卡可选择日期，支持补录过去漏记的记录；下方「打卡日历与统计」按月显示每天的消耗深浅，并汇总当月打卡天数、连续天数、累计打卡与平均每次消耗。<br>
         10. 「跳操打卡 → 操课类型」不再预置课程，直接输入自己的课程名即可；输入过的会自动记入课程库，之后可从下拉候选里选。热量先按名字匹配常见 MET，匹配不到按中等强度 6.0 估算，也可直接填实测消耗。<br>
         11. 首页「今日热量」的每日摄入额度默认按公式自动估算，点中间圆环可改成自定义固定值或仅当日调整，设置只存本机。<br>
@@ -2970,6 +2984,22 @@ function periodInfo(mid){
   return {has:true,last,cycle,days,diff,cycleDay,dayNo:cycleDay+1,nextStart,toNext,inPeriod,inPre:false,
     rest: inPeriod && cycleDay<PERIOD_DAYS_REST};
 }
+/* 生理期估算：按最近一次经期记录推算——经期第1-5天=经期，之后卵泡期；
+   排卵日约在下次经期前 14 天，排卵日前后共 3 天=排卵期，其余=黄体期（估算值，仅供参考） */
+function cyclePhaseOf(ds){
+  const list=live(state.periods||[]).filter(x=>x.memberId===myId&&x.startDate&&String(x.startDate)<=ds)
+    .slice().sort((a,b)=>String(a.startDate).localeCompare(String(b.startDate)));
+  if(!list.length) return null;
+  const r=list[list.length-1];
+  const cycle=clamp(num(r.cycle)||28,20,45), days=clamp(num(r.days)||5,2,10);
+  const diff=Math.round((dayTs(ds)-dayTs(r.startDate))/86400000);
+  const dayNo=diff%cycle+1;
+  const ovuNo=Math.max(days+1,cycle-14), ovuEnd=Math.min(cycle-1,ovuNo+2);
+  if(dayNo<=days) return {n:'经期',c:'#d16a92'};
+  if(dayNo<ovuNo) return {n:'卵泡期',c:'#4a9d7f'};
+  if(dayNo<=ovuEnd) return {n:'排卵期',c:'#5b8dd9'};
+  return {n:'黄体期',c:'#c9821f'};
+}
 function pcalMonth(){
   if(!periodMonth){
     const d=new Date();
@@ -3011,7 +3041,8 @@ function renderPeriod(){
   if(p.has && p.future){ k='待开始'; unit=''; st='记录的日期还没到'; }
   else if(p.has && p.inPeriod){ k='第 '+p.dayNo+' 天'; unit='经期中'; st=p.rest?'经期前 3 天 · 按约定不运动':('预计 '+fmtDate(p.nextStart)+' 开始下一次'); }
   else if(p.has){ k='还有 '+p.toNext+' 天'; unit='距下次'; st='下次预计 '+fmtDate(p.nextStart); }
-  box.innerHTML='<div class="preview" style="margin:0 0 12px"><b>'+k+'</b><span>'+(unit?unit+' · ':'')+esc(st)+'</span></div>';
+  const phNow=cyclePhaseOf(today());
+  box.innerHTML='<div class="preview" style="margin:0 0 12px"><b>'+k+'</b><span>'+(unit?unit+' · ':'')+esc(st)+(phNow?' · 当前：<b style="color:'+phNow.c+'">'+phNow.n+'</b>':'')+'</span></div>';
 
   const tipEl=$('#periodTip');
   if(tipEl){
@@ -3034,7 +3065,10 @@ function renderPeriod(){
     for(let i=0;i<padN;i++) cells+='<div class="pcal-day out"></div>';
     for(let d=1;d<=dim;d++){
       const ds=Y+'-'+String(M).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-      cells+='<div class="pcal-day'+(map[ds]?' '+map[ds]:'')+(ds===today()?' today':'')+'">'+d+'</div>';
+      const ph=cyclePhaseOf(ds);
+      const onPeriod=map[ds]&&map[ds].indexOf('period')>=0;
+      cells+='<div class="pcal-day'+(map[ds]?' '+map[ds]:'')+(ds===today()?' today':'')+'">'+d+
+        (ph?'<i class="pcal-ph" style="color:'+(onPeriod?'#fff':ph.c)+'">'+ph.n+'</i>':'')+'</div>';
     }
     g.innerHTML=cells;
   }
