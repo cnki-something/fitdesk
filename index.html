@@ -1489,11 +1489,17 @@ function mealQuickModal(slot){
   if(!myId){ identityModal(true); return; }
   mqSlot=slot||'加餐';
   showModal('<h3>🍽️ 记录'+esc(mqSlot)+'</h3>'+
-    '<div class="mdesc">输入食物名称和热量，可连续添加多样；保存后立即计入首页「饮食摄入」，这一餐也会打勾。</div>'+
+    '<div class="mdesc">输入食物名称和热量，营养素四项选填，填了立即计入首页圆环；可连续添加多样，保存后这一餐也会打勾。</div>'+
     '<div id="mqList"></div>'+
     '<div class="form-row r2" style="margin-top:10px">'+
       '<div class="field"><label>食物名称</label><input id="mqName" maxlength="40" placeholder="例如 燕麦粥"></div>'+
       '<div class="field"><label>热量（kcal）</label><input id="mqKcal" type="number" min="0" max="3000" placeholder="例如 150"></div>'+
+    '</div>'+
+    '<div class="form-row r4">'+
+      '<div class="field"><label>蛋白质（g）</label><input id="mqPro" type="number" min="0" max="500" step="0.1" placeholder="选填"></div>'+
+      '<div class="field"><label>脂肪（g）</label><input id="mqFat" type="number" min="0" max="500" step="0.1" placeholder="选填"></div>'+
+      '<div class="field"><label>碳水（g）</label><input id="mqCarb" type="number" min="0" max="800" step="0.1" placeholder="选填"></div>'+
+      '<div class="field"><label>纤维（g）</label><input id="mqFib" type="number" min="0" max="200" step="0.1" placeholder="选填"></div>'+
     '</div>'+
     '<button class="btn btn-primary btn-block" data-action="mq-add" style="margin-top:4px">＋ 添加这一样</button>'+
     '<button class="btn btn-ghost btn-block" data-action="close-modal" style="margin-top:8px">完成</button>');
@@ -1503,10 +1509,11 @@ function renderMealQuickList(){
   const box=$('#mqList'); if(!box) return;
   const rows=live(state.meals).filter(m=>m.memberId===myId&&m.date===today()&&m.slot===mqSlot);
   const sum=rows.reduce((a,m)=>a+num(m.kcal),0);
+  const sm=k=>Math.round(rows.reduce((a,m)=>a+num(m[k]),0)*10)/10;
   box.innerHTML=rows.length
     ? '<div class="mq-list">'+rows.map(m=>'<div class="mq-row"><span>'+esc(m.text||'食物')+'</span>'+
         '<b>'+num(m.kcal)+' kcal</b><button class="mq-del" data-action="mq-del" data-id="'+esc(m.id)+'" title="删除">✕</button></div>').join('')+
-      '<div class="mq-sum">'+esc(mqSlot)+'小计 · '+sum+' kcal</div></div>'
+      '<div class="mq-sum">'+esc(mqSlot)+'小计 · '+sum+' kcal · 蛋白 '+sm('pro')+' / 脂肪 '+sm('fat')+' / 碳水 '+sm('carb')+' / 纤维 '+sm('fib')+' g</div></div>'
     : '<div class="mini" style="margin:2px 0 8px">这一餐还没有记录，在下面添加第一样吧。</div>';
 }
 function renderTrendChart(){
@@ -1659,7 +1666,7 @@ function renderHomeCards(){
     const defs=[['蛋白质','pro',mac.pro,'#c95f88'],['脂肪','fat',mac.fat,'#e8a13c'],['碳水','carb',mac.carb,'#5b8dd9'],['膳食纤维','fib',mac.fib,'#4a9d7f']];
     $('#macroRow').innerHTML='<div class="mini" style="grid-column:1/-1;text-align:center;margin-top:-2px">每日推荐 · 按最近体重 '+(mac.kg>0?(mac.kg*2).toFixed(1)+' 斤':'—（先记体重）')+' 计算 · 圆环为今日已录入占比</div>'+
       defs.map(d=>{ const v=Math.round(mSum[d[1]]*10)/10, tg=d[2], p=tg>0?clamp(Math.round(v/tg*100),0,100):0;
-        return '<div class="macro-cell"><div class="macro-ring" style="--p:'+p+';--mc:'+d[3]+'"><i><b>'+v+'<small>g</small></b></i></div>'+
+        return '<div class="macro-cell"><div class="macro-ring" data-action="open-mealquick" data-slot="加餐" title="点一下直接录入营养素（计入加餐）" style="--p:'+p+';--mc:'+d[3]+';cursor:pointer"><i><b>'+v+'<small>g</small></b></i></div>'+
           '<div class="ml">'+d[0]+'<br>目标 '+tg+'g</div></div>'; }).join('');
   }
   const mr=$('#mealRow');
@@ -3567,11 +3574,15 @@ function bind(){
     else if(a==='mq-add'){
       const name=($('#mqName')?$('#mqName').value:'').trim();
       const k=Math.round(num($('#mqKcal')?$('#mqKcal').value:0));
+      const mv=id=>{ const raw=$(id)?$(id).value.trim():''; return raw===''?0:clamp(num(raw),0,800); };
+      const mPro=mv('#mqPro'), mFat=mv('#mqFat'), mCarb=mv('#mqCarb'), mFib=mv('#mqFib');
       if(!name){ toast('请填写食物名称'); return; }
       if(!(k>0&&k<=3000)){ toast('请填写 1–3000 之间的热量'); return; }
       commit(()=>{ state.meals.push({id:uid('ml'),memberId:myId,date:today(),slot:mqSlot,
-        text:name,kcal:k,protein:0,source:'quick',ts:Date.now()}); });
-      $('#mqName').value=''; $('#mqKcal').value=''; $('#mqName').focus();
+        text:name,kcal:k,protein:mPro,pro:mPro,fat:mFat,carb:mCarb,fib:mFib,source:'quick',ts:Date.now()}); });
+      $('#mqName').value=''; $('#mqKcal').value='';
+      ['#mqPro','#mqFat','#mqCarb','#mqFib'].forEach(id=>{ if($(id)) $(id).value=''; });
+      $('#mqName').focus();
       renderMealQuickList();
       toast('已添加 '+name+' · '+k+' kcal'+syncTag());
     }
