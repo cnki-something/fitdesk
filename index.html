@@ -309,10 +309,12 @@ a{color:var(--main-d)}
 .rice-tag{color:var(--main-d);font-weight:700;white-space:nowrap}
 .hm-item .rice-sub{display:block;font-size:10.5px;color:var(--main-d);font-weight:700;margin-top:2px;min-height:15px;line-height:1.4}
 .macro-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
-.macro-row div{text-align:center;background:#fdf7f9;border-radius:10px;padding:7px 4px 6px}
-.macro-row b{font-size:14.5px;font-weight:800;color:var(--ink);line-height:1.2}
-.macro-row b small{font-size:10px;font-weight:700;color:var(--ink3)}
-.macro-row span{display:block;font-size:10.5px;color:var(--ink3);margin-top:1px}
+.macro-row .macro-cell{text-align:center;background:#fdf7f9;border-radius:10px;padding:8px 4px 7px}
+.macro-ring{width:56px;height:56px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:conic-gradient(var(--mc,#c95f88) calc(var(--p,0)*1%),#f6e7ee 0)}
+.macro-ring i{width:42px;height:42px;border-radius:50%;background:#fff;display:grid;place-items:center;font-style:normal}
+.macro-ring i b{font-size:11px;font-weight:800;color:var(--ink);line-height:1}
+.macro-ring i b small{font-size:8px;color:var(--ink3);font-weight:700}
+.macro-row .ml{font-size:10.5px;color:var(--ink3);margin-top:3px;font-weight:700;line-height:1.35}
 
 /* charts */
 .chart{width:100%;height:auto;display:block;overflow:visible}
@@ -758,6 +760,13 @@ a{color:var(--main-d)}
             <div class="field"><label>估算热量（kcal）</label><input id="mKcal" type="number" min="0" max="3000" placeholder="450"></div>
           </div>
           <div class="form-row"><div class="field"><label>内容</label><input id="mText" maxlength="60" placeholder="例如：糙米饭 + 鸡胸 + 西兰花"></div></div>
+          <div class="form-row r4">
+            <div class="field"><label>蛋白质（g）</label><input id="mPro" type="number" min="0" max="500" step="0.1" placeholder="选填"></div>
+            <div class="field"><label>脂肪（g）</label><input id="mFat" type="number" min="0" max="500" step="0.1" placeholder="选填"></div>
+            <div class="field"><label>碳水（g）</label><input id="mCarb" type="number" min="0" max="800" step="0.1" placeholder="选填"></div>
+            <div class="field"><label>纤维（g）</label><input id="mFib" type="number" min="0" max="200" step="0.1" placeholder="选填"></div>
+          </div>
+          <p class="mini" style="margin:-4px 0 10px;line-height:1.6">四项营养素选填，留空沿用之前录入的值；首页圆环按当日四餐合计显示进度。</p>
           <button class="btn btn-primary btn-block" type="submit">保存这一餐</button>
         </form>
       </div>
@@ -1646,9 +1655,12 @@ function renderHomeCards(){
     const ring=$('#heatRing'); if(ring) ring.style.setProperty('--p',pct.toFixed(1));
   }
   if($('#macroRow')){
-    const mac=macroTargets(myId);
-    $('#macroRow').innerHTML='<div class="mini" style="grid-column:1/-1;text-align:center;margin-top:-2px">每日推荐摄入 · 按最近体重 '+(mac.kg>0?(mac.kg*2).toFixed(1)+' 斤':'—（先记体重）')+' 自动计算</div>'+
-      [['蛋白质',mac.pro],['脂肪',mac.fat],['碳水',mac.carb],['膳食纤维',mac.fib]].map(x=>'<div><b>'+x[1]+'<small> g</small></b><span>'+x[0]+'</span></div>').join('');
+    const mac=macroTargets(myId), mSum=macroEaten(myId,t);
+    const defs=[['蛋白质','pro',mac.pro,'#c95f88'],['脂肪','fat',mac.fat,'#e8a13c'],['碳水','carb',mac.carb,'#5b8dd9'],['膳食纤维','fib',mac.fib,'#4a9d7f']];
+    $('#macroRow').innerHTML='<div class="mini" style="grid-column:1/-1;text-align:center;margin-top:-2px">每日推荐 · 按最近体重 '+(mac.kg>0?(mac.kg*2).toFixed(1)+' 斤':'—（先记体重）')+' 计算 · 圆环为今日已录入占比</div>'+
+      defs.map(d=>{ const v=Math.round(mSum[d[1]]*10)/10, tg=d[2], p=tg>0?clamp(Math.round(v/tg*100),0,100):0;
+        return '<div class="macro-cell"><div class="macro-ring" style="--p:'+p+';--mc:'+d[3]+'"><i><b>'+v+'<small>g</small></b></i></div>'+
+          '<div class="ml">'+d[0]+'<br>目标 '+tg+'g</div></div>'; }).join('');
   }
   const mr=$('#mealRow');
   if(mr){
@@ -1813,6 +1825,12 @@ function macroTargets(mid){
   const fib=Math.round(kcal/1000*14*10)/10;
   const carb=kg>0?Math.max(0,Math.round((kcal-pro*4-fat*9)/4)):0;
   return {kg:kg,kcal:kcal,pro:pro,fat:fat,carb:carb,fib:fib};
+}
+/* 当日四餐营养素合计（g） */
+function macroEaten(mid,date){
+  const ms=live(state.meals).filter(x=>x.memberId===mid&&x.date===date);
+  const sum=k=>Math.round(ms.reduce((a,x)=>a+num(x[k]),0)*10)/10;
+  return {pro:sum('pro'),fat:sum('fat'),carb:sum('carb'),fib:sum('fib')};
 }
 function intakeModal(){
   const b=budget(myId);
@@ -2810,8 +2828,9 @@ function renderDiet(){
   $('#mealSummary').textContent='我今日共记录 '+meals.length+' 餐 · 合计 '+kcalSum(meals)+' kcal';
   $('#mealList').innerHTML=meals.length?meals.map(x=>{
     const m=member(x.memberId);
+    const mm=[['蛋白',x.pro!==undefined?x.pro:x.protein],['脂肪',x.fat],['碳水',x.carb],['纤维',x.fib]].filter(a=>num(a[1])>0).map(a=>a[0]+' '+num(a[1])+' g').join(' / ');
     return '<div class="item">'+(x.photo?'<img src="'+esc(x.photo)+'" style="width:38px;height:38px;border-radius:9px;object-fit:cover;flex:none" alt="">':avatarHTML(m,26))+
-      '<div class="body"><div class="t1"><span class="tag g">'+esc(x.slot)+'</span>'+(x.photo?'<span class="tag r">📷</span>':'')+esc(x.text||'未填写内容')+'</div><div class="t2">'+esc(m.name)+' · '+fmtDT(x.ts)+(x.protein?' · 蛋白 '+num(x.protein)+' g':'')+'</div></div><div class="num">'+num(x.kcal)+'</div>'+delBtn('meals',x.id,x.memberId)+'</div>';
+      '<div class="body"><div class="t1"><span class="tag g">'+esc(x.slot)+'</span>'+(x.photo?'<span class="tag r">📷</span>':'')+esc(x.text||'未填写内容')+'</div><div class="t2">'+esc(m.name)+' · '+fmtDT(x.ts)+(mm?' · '+mm:'')+'</div></div><div class="num">'+num(x.kcal)+'</div>'+delBtn('meals',x.id,x.memberId)+'</div>';
   }).join(''):emptyHTML('🥣','今天还没有饮食记录');
 }
 
@@ -3357,9 +3376,17 @@ function bind(){
       toast('经期已记录 · 周期 '+cycle+' 天 · 仅本机');
     }else if(kind==='meal'){
       const slot=$('#mSlot').value, text=$('#mText').value.trim(), kcal=num($('#mKcal').value);
-      if(!text&&!kcal){ toast('写点内容或填个热量吧'); return; }
-      commit(()=>{ upsert('meals','ml_'+myId+'_'+t+'_'+slot,{id:'ml_'+myId+'_'+t+'_'+slot,memberId:myId,date:t,slot,text,kcal,ts:now}); });
-      $('#mText').value=''; $('#mKcal').value=''; toast('这一餐已记录');
+      const gv=(id,prevV)=>{ const raw=$(id)?$(id).value.trim():''; return raw===''?(prevV||0):clamp(num(raw),0,800); };
+      const prevMeal=live(state.meals).find(x=>x.id==='ml_'+myId+'_'+t+'_'+slot);
+      const anyM=['#mPro','#mFat','#mCarb','#mFib'].some(id=>$(id)&&$(id).value.trim()!=='');
+      if(!text&&!kcal&&!anyM&&!prevMeal){ toast('写点内容或填个热量吧'); return; }
+      const mPro=gv('#mPro',prevMeal&&prevMeal.pro), mFat=gv('#mFat',prevMeal&&prevMeal.fat), mCarb=gv('#mCarb',prevMeal&&prevMeal.carb), mFib=gv('#mFib',prevMeal&&prevMeal.fib);
+      commit(()=>{ upsert('meals','ml_'+myId+'_'+t+'_'+slot,{id:'ml_'+myId+'_'+t+'_'+slot,memberId:myId,date:t,slot,
+        text:text||(prevMeal?prevMeal.text:''),kcal:kcal||(prevMeal?num(prevMeal.kcal):0),
+        pro:mPro,fat:mFat,carb:mCarb,fib:mFib,ts:now}); });
+      $('#mText').value=''; $('#mKcal').value='';
+      ['#mPro','#mFat','#mCarb','#mFib'].forEach(id=>{ if($(id)) $(id).value=''; });
+      toast('这一餐已记录 · 营养素圆环已更新');
     }else if(kind==='message'){
       const text=$('#msgText').value.trim(); if(!text){ toast('先写点什么吧'); return; }
       commit(()=>{ state.messages.push({id:uid('msg'),memberId:myId,text,ts:now}); });
