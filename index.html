@@ -308,6 +308,11 @@ a{color:var(--main-d)}
 @media(max-width:520px){.rice-box b{font-size:18px}.rice-box .mini{font-size:10px}}
 .rice-tag{color:var(--main-d);font-weight:700;white-space:nowrap}
 .hm-item .rice-sub{display:block;font-size:10.5px;color:var(--main-d);font-weight:700;margin-top:2px;min-height:15px;line-height:1.4}
+.macro-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.macro-row div{text-align:center;background:#fdf7f9;border-radius:10px;padding:7px 4px 6px}
+.macro-row b{font-size:14.5px;font-weight:800;color:var(--ink);line-height:1.2}
+.macro-row b small{font-size:10px;font-weight:700;color:var(--ink3)}
+.macro-row span{display:block;font-size:10.5px;color:var(--ink3);margin-top:1px}
 
 /* charts */
 .chart{width:100%;height:auto;display:block;overflow:visible}
@@ -567,6 +572,7 @@ a{color:var(--main-d)}
         <div class="hm-ring" id="heatRing" data-action="edit-intake" title="点击编辑每日摄入额度" style="--p:0"><div class="hr"><b id="heatLeft">0</b><span>还可以吃<i class="ig-edit"> ✎</i></span></div></div>
         <div class="hm-item"><b id="heBurn">0</b><span>运动消耗</span><i class="rice-sub" id="heBurnRice"></i></div>
       </div>
+      <div class="macro-row" id="macroRow"></div>
       <div class="meal-row" id="mealRow"></div>
       <div class="btn-row" style="margin-top:12px">
         <button class="btn btn-primary" style="flex:1" data-action="open-quickfood">📷 拍照识别食物</button>
@@ -801,7 +807,7 @@ a{color:var(--main-d)}
     <div class="card" style="margin-top:20px">
       <div class="sec-head"><h3><span class="ic">🎯</span>今日热量预算</h3><span class="tag" id="budgetTag">按档案估算</span></div>
       <div id="budgetBox"></div>
-      <p class="desc" style="margin:12px 0 0">估算采用 Mifflin-St Jeor 公式，活动系数取 1.35，制造约 400 kcal 热量缺口；跳操消耗按 50% 回补（上限 300 kcal）。仅为一般性参考，不替代医学或营养建议。</p>
+      <p class="desc" style="margin:12px 0 0">自动额度采用「体重（kg）× 2.2 × 11」估算，随最近记录的体重自动变化；跳操消耗按 50% 回补（上限 300 kcal）。首页「今日热量」卡的蛋白质/脂肪/碳水/膳食纤维推荐也按体重自动计算。仅为一般性参考，不替代医学或营养建议。</p>
     </div>
 
     <div class="card">
@@ -1639,6 +1645,11 @@ function renderHomeCards(){
     $('#heatHint').textContent='额度 '+num(b.target)+' kcal · '+(b.src==='auto'?'自动':(b.src==='day'?'今日调整':'手动'))+' · 点圆环修改';
     const ring=$('#heatRing'); if(ring) ring.style.setProperty('--p',pct.toFixed(1));
   }
+  if($('#macroRow')){
+    const mac=macroTargets(myId);
+    $('#macroRow').innerHTML='<div class="mini" style="grid-column:1/-1;text-align:center;margin-top:-2px">每日推荐摄入 · 按最近体重 '+(mac.kg>0?(mac.kg*2).toFixed(1)+' 斤':'—（先记体重）')+' 自动计算</div>'+
+      [['蛋白质',mac.pro],['脂肪',mac.fat],['碳水',mac.carb],['膳食纤维',mac.fib]].map(x=>'<div><b>'+x[1]+'<small> g</small></b><span>'+x[0]+'</span></div>').join('');
+  }
   const mr=$('#mealRow');
   if(mr){
     const meals=live(state.meals).filter(x=>x.memberId===myId&&x.date===t);
@@ -1791,13 +1802,25 @@ function renderTodayBurn(){
       '<div class="mini" style="margin-top:6px">'+(k>0?'今日已打卡 ✓':'今日待打卡')+'</div></div>';
   }).join('');
 }
+/* 宏量营养推荐（均随最近体重变化，体重按 kg 计）：
+   蛋白质 = kg×0.8；脂肪 = kg×0.3；热量 = kg×2.2×11；
+   膳食纤维 = 热量/1000×14；碳水 =（热量 − 蛋白质×4 − 脂肪×9）÷ 4（剩余供能法，三项正好对齐热量） */
+function macroTargets(mid){
+  const kg=latestWeight(mid);
+  const kcal=Math.round(kg*2.2*11);
+  const pro=Math.round(kg*0.8*10)/10;
+  const fat=Math.round(kg*0.3*10)/10;
+  const fib=Math.round(kcal/1000*14*10)/10;
+  const carb=kg>0?Math.max(0,Math.round((kcal-pro*4-fat*9)/4)):0;
+  return {kg:kg,kcal:kcal,pro:pro,fat:fat,carb:carb,fib:fib};
+}
 function intakeModal(){
   const b=budget(myId);
   const goals=live(state.intakeGoals||[]);
   const def=goals.find(g=>g.memberId===myId&&g.type==='default');
   const day=goals.find(g=>g.memberId===myId&&g.type==='day'&&g.date===today());
   showModal('<h3>🎯 每日摄入额度</h3>'+
-    '<div class="mdesc">首页「还可以吃」= 每日额度 − 今日已记录摄入。默认按身高/体重/年龄自动估算，当前自动值为 <b>'+b.autoTarget+' kcal</b>；也可以自己定一个数，或仅给今天临时调整。</div>'+
+    '<div class="mdesc">首页「还可以吃」= 每日额度 − 今日已记录摄入。自动额度按「体重 kg × 2.2 × 11」估算、随体重变化，当前自动值为 <b>'+b.autoTarget+' kcal</b>；也可以自己定一个数，或仅给今天临时调整。</div>'+
     '<div class="field"><label>额度方式</label><select id="igMode">'+
       '<option value="auto"'+(def&&def.mode==='fixed'?'':' selected')+'>自动（按公式估算，跳操后略有回补）</option>'+
       '<option value="fixed"'+(def&&def.mode==='fixed'?' selected':'')+'>自定义固定值（每天一样）</option>'+
@@ -1807,14 +1830,12 @@ function intakeModal(){
     '<div class="btn-row" style="margin-top:14px"><button class="btn btn-primary" data-action="save-intake">保存</button><button class="btn btn-ghost" data-action="close-modal">取消</button></div>');
 }
 function budget(mid){
-  const m=member(mid), kg=latestWeight(mid), h=num(m.height), a=num(m.age);
-  const done = h>0 && a>0;
-  let base=1500, detail='通用估算';
+  const m=member(mid), kg=latestWeight(mid);
+  const done = kg>0;
+  let base=1500, detail='通用估算（先记一次体重）';
   if(done){
-    const bmr=10*kg+6.25*h-5*a+(m.gender==='male'?5:-161);
-    const tdee=bmr*1.35;
-    base=Math.round(Math.max(tdee-400,bmr*1.2,1200));
-    detail='Mifflin-St Jeor · 活动系数 1.35';
+    base=Math.round(kg*2.2*11);
+    detail='体重 kg × 2.2 × 11';
   }
   const back=Math.min(Math.round(kcalSum(workoutsOf(mid,today()))*0.5),300);
   const autoTarget=Math.round((base+back)/10)*10;
@@ -2770,14 +2791,14 @@ function viewPhoto(id){
 /* ---------------- render: diet ---------------- */
 function renderDiet(){
   const b=budget(myId);
-  $('#budgetTag').textContent=b.src==='day'?'今日手动调整':(b.src==='fixed'?'手动设定':(b.done?'按档案估算':'通用参考值'));
+  $('#budgetTag').textContent=b.src==='day'?'今日手动调整':(b.src==='fixed'?'手动设定':(b.done?'按体重公式估算':'通用参考值'));
   $('#budgetBox').innerHTML=
     '<div class="preview" style="margin:0 0 13px"><b>'+b.low+'–'+b.high+'</b><span>kcal · 今日建议摄入区间</span></div>'+
-    '<div class="stat-line"><span>基础预算（含约 400 kcal 缺口）</span><b>'+b.base+' kcal</b></div>'+
+    '<div class="stat-line"><span>每日热量预算（体重 kg × 2.2 × 11）</span><b>'+b.base+' kcal</b></div>'+
     '<div class="stat-line"><span>今日跳操回补</span><b>+'+b.back+' kcal'+riceHint(b.back)+'</b></div>'+
     '<div class="stat-line"><span>今日已记录摄入</span><b>'+b.eaten+' kcal</b></div>'+
     '<div class="stat-line"><span>参考体重 / 估算方式</span><b>'+b.kg.toFixed(2)+' kg<small class="mini"> · '+b.detail+'</small></b></div>'+
-    (b.done?'':'<div class="note warn" style="margin-top:11px">尚未填写身高与年龄，当前为通用参考值。到「设置 → 我的档案」补全后可得到个人化估算。</div>')+
+    (b.done?'':'<div class="note warn" style="margin-top:11px">尚未记录体重，当前为通用参考值。先在首页「体重」卡记一次体重，热量预算与四大营养素推荐会自动按体重计算。</div>')+
     '<div class="btn-row" style="margin-top:11px"><button class="btn" data-action="edit-intake" style="flex:1">✎ 自己编辑每日摄入额度</button></div>';
   const rec=recipeSet();
   $('#recipeSlots').innerHTML=Object.keys(RECIPES).map(s=>{
